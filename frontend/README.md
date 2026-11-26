@@ -39,7 +39,8 @@ Requires Node ≥ 20 (verified on v25.8.1) and npm.
   snap guides, pan/zoom, selection, and non-destructive activity templates
   (Harkness, debate, mock trial, group discussion, gallery walk, station rotation,
   and blank canvas).
-- Node notes: plain-text title + body per node, edited by double-click or inspector.
+- Node notes: plain-text title + body per node, edited by double-click or inspector;
+  hovering a noted node previews the note at the cursor.
 - Roster: names, tags, `togetherWith` / `notWith` constraints, bulk paste, drag chips
   onto seats, capacity enforcement, conflict warnings.
 - Grouping: random and constraint-aware generation with violation reporting, preview,

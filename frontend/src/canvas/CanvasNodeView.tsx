@@ -44,10 +44,24 @@ export const CanvasNodeView = memo(function CanvasNodeView({
   const selectNode = useUiStore((state) => state.selectNode);
   const openNoteEditor = useUiStore((state) => state.openNoteEditor);
   const setSnapGuides = useUiStore((state) => state.setSnapGuides);
+  const setNodeHover = useUiStore((state) => state.setNodeHover);
   const updateNode = useLessonStore((state) => state.updateNode);
 
   const groupRef = useRef<Konva.Group>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
+  const hoverTimer = useRef<number | undefined>(undefined);
+  const hoverPoint = useRef<{ x: number; y: number } | null>(null);
+  const hoverVisible = useRef(false);
+
+  useEffect(
+    () => () => {
+      if (hoverTimer.current !== undefined) window.clearTimeout(hoverTimer.current);
+      if (useUiStore.getState().nodeHover?.nodeId === nodeId) {
+        useUiStore.getState().setNodeHover(null);
+      }
+    },
+    [nodeId],
+  );
 
   useEffect(() => {
     const transformer = transformerRef.current;
@@ -71,8 +85,41 @@ export const CanvasNodeView = memo(function CanvasNodeView({
     ? (singleAssignee.name.trim().split(/\s+/)[0] ?? singleAssignee.name)
     : node.label;
 
+  const hideHover = () => {
+    if (hoverTimer.current !== undefined) {
+      window.clearTimeout(hoverTimer.current);
+      hoverTimer.current = undefined;
+    }
+    hoverPoint.current = null;
+    if (hoverVisible.current) {
+      hoverVisible.current = false;
+      if (useUiStore.getState().nodeHover?.nodeId === node.id) setNodeHover(null);
+    }
+  };
+
+  const scheduleHover = (event: Konva.KonvaEventObject<MouseEvent>) => {
+    if (!hasNote) {
+      hideHover();
+      return;
+    }
+    hoverPoint.current = { x: event.evt.clientX, y: event.evt.clientY };
+    if (hoverVisible.current) {
+      setNodeHover({ nodeId: node.id, clientX: event.evt.clientX, clientY: event.evt.clientY });
+      return;
+    }
+    if (hoverTimer.current !== undefined) return;
+    hoverTimer.current = window.setTimeout(() => {
+      hoverTimer.current = undefined;
+      const point = hoverPoint.current;
+      if (!point) return;
+      hoverVisible.current = true;
+      setNodeHover({ nodeId: node.id, clientX: point.x, clientY: point.y });
+    }, 260);
+  };
+
   const handleClick = (event: Konva.KonvaEventObject<Event>) => {
     event.cancelBubble = true;
+    hideHover();
     selectNode(node.id);
   };
 
@@ -136,27 +183,35 @@ export const CanvasNodeView = memo(function CanvasNodeView({
         draggable
         onClick={handleClick}
         onTap={handleClick}
-        onDragStart={handleClick}
+        onDragStart={(event) => {
+          hideHover();
+          handleClick(event);
+        }}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}
         onTransformEnd={handleTransformEnd}
         onDblClick={(event) => {
           event.cancelBubble = true;
+          hideHover();
           selectNode(node.id);
           openNoteEditor(node.id);
         }}
         onDblTap={(event) => {
           event.cancelBubble = true;
+          hideHover();
           selectNode(node.id);
           openNoteEditor(node.id);
         }}
         onMouseEnter={(event) => {
           const container = event.target.getStage()?.container();
           if (container) container.style.cursor = 'grab';
+          scheduleHover(event);
         }}
+        onMouseMove={scheduleHover}
         onMouseLeave={(event) => {
           const container = event.target.getStage()?.container();
           if (container) container.style.cursor = '';
+          hideHover();
         }}
       >
         {info.shape === 'ellipse' ? (

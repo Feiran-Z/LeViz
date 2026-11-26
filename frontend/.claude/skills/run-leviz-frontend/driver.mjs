@@ -184,6 +184,19 @@ async function runLessonFlow(page, opts, shoot, checks) {
   }
   await shoot('04-node-note');
 
+  // Hovering a noted seat previews its note at the cursor.
+  await page.mouse.move(700, 367);
+  await page.waitForTimeout(500);
+  const tooltip = page.getByRole('tooltip');
+  check(
+    'hovering a noted seat shows its note',
+    (await tooltip.count()) === 1 && (await tooltip.innerText()).includes('Harkness prompt'),
+  );
+  await shoot('04a-note-tooltip');
+  await page.mouse.move(450, 650);
+  await page.waitForTimeout(250);
+  check('note tooltip hides when the cursor leaves', (await page.getByRole('tooltip').count()) === 0);
+
   // Move Seat 1, then undo the move. The inspector's Position row proves both.
   const inspectorText = async () => page.locator('aside').last().innerText().catch(() => '');
   const positionOf = (text) => text.match(/Position\s+(-?\d+),\s*(-?\d+)/)?.[0] ?? '';

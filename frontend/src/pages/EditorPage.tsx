@@ -6,6 +6,7 @@ import { TopBar } from '../components/layout/TopBar';
 import { RightPanel } from '../components/panels/RightPanel';
 import { SegmentOutline } from '../components/panels/SegmentOutline';
 import { LessonOverview } from '../components/overview/LessonOverview';
+import { NodeNoteTooltip } from '../canvas/NodeNoteTooltip';
 import { LayoutSegmentEditor } from '../components/segments/LayoutSegmentEditor';
 import { TextSegmentEditor } from '../components/segments/TextSegmentEditor';
 import { LAYOUT_TEMPLATES } from '../domain/templates';
@@ -152,7 +153,10 @@ export function EditorPage() {
     if (!lessonId) return undefined;
     useUiStore.getState().resetForLesson();
     void openLesson(lessonId);
-    return () => closeLesson();
+    return () => {
+      useUiStore.getState().setNodeHover(null);
+      closeLesson();
+    };
   }, [lessonId]);
 
   useEffect(() => {
@@ -305,6 +309,8 @@ export function EditorPage() {
         )}
       </div>
       )}
+
+      <NodeNoteTooltip />
 
       <ConfirmDialog
         open={deleteOpen}

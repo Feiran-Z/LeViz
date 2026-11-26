@@ -20,6 +20,13 @@ export interface GroupPreview {
   groupCount: number;
 }
 
+/** Cursor position (viewport coords) over a node that carries a note. */
+export interface NodeHover {
+  nodeId: string;
+  clientX: number;
+  clientY: number;
+}
+
 interface UiState {
   activeSegmentId: string | null;
   selectedNodeId: string | null;
@@ -37,6 +44,7 @@ interface UiState {
   toasts: Toast[];
   groupCountOverride: number | null;
   groupPreview: GroupPreview | null;
+  nodeHover: NodeHover | null;
 
   setActiveSegment: (id: string | null) => void;
   setViewMode: (mode: ViewMode) => void;
@@ -54,6 +62,7 @@ interface UiState {
   setResolvedTheme: (theme: 'light' | 'dark') => void;
   setGroupCountOverride: (count: number | null) => void;
   setGroupPreview: (preview: GroupPreview | null) => void;
+  setNodeHover: (hover: NodeHover | null) => void;
   notify: (message: string, tone?: ToastTone) => void;
   dismissToast: (id: string) => void;
   resetForLesson: () => void;
@@ -104,13 +113,22 @@ export const useUiStore = create<UiState>()((set, get) => ({
   toasts: [],
   groupCountOverride: null,
   groupPreview: null,
+  nodeHover: null,
 
   setActiveSegment: (id) =>
-    set({ activeSegmentId: id, selectedNodeId: null, noteNodeId: null, snapGuides: [] }),
-  setViewMode: (viewMode) => set({ viewMode }),
+    set({
+      activeSegmentId: id,
+      selectedNodeId: null,
+      noteNodeId: null,
+      snapGuides: [],
+      nodeHover: null,
+    }),
+  setViewMode: (viewMode) =>
+    set((state) => ({ viewMode, nodeHover: viewMode === 'overview' ? null : state.nodeHover })),
   selectNode: (id) =>
     set((state) => ({
       selectedNodeId: id,
+      nodeHover: null,
       // Selecting furniture must not yank the teacher out of a Groups preview.
       rightTab: id && state.rightTab !== 'groups' ? 'node' : state.rightTab,
     })),
@@ -122,7 +140,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
   setPan: (x, y) => set({ panX: x, panY: y }),
   resetViewport: () => set({ zoom: 1, panX: 0, panY: 0 }),
   setSnapGuides: (snapGuides) => set({ snapGuides }),
-  openNoteEditor: (noteNodeId) => set({ noteNodeId }),
+  openNoteEditor: (noteNodeId) => set({ noteNodeId, ...(noteNodeId ? { nodeHover: null } : {}) }),
   setThemePreference: (themePreference) => {
     try {
       localStorage.setItem('leviz-theme', themePreference);
@@ -134,6 +152,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
   setResolvedTheme: (resolvedTheme) => set({ resolvedTheme }),
   setGroupCountOverride: (groupCountOverride) => set({ groupCountOverride }),
   setGroupPreview: (groupPreview) => set({ groupPreview }),
+  setNodeHover: (nodeHover) => set({ nodeHover }),
 
   notify: (message, tone = 'info') => {
     toastCounter += 1;
@@ -159,6 +178,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
       panY: 0,
       groupCountOverride: null,
       groupPreview: null,
+      nodeHover: null,
       // Keep panel layout and theme: they are workspace preferences.
       leftCollapsed: state.leftCollapsed,
       rightCollapsed: state.rightCollapsed,
