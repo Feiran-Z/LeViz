@@ -1,0 +1,169 @@
+---
+name: run-leviz-frontend
+description: Run, start, build, test, and screenshot the LeViz frontend — a Vite + React 19 + TypeScript SPA for visual lesson planning. Use when asked to run or start the LeViz app, build it, take a screenshot, or smoke-test the lesson editor UI.
+---
+
+# Run: LeViz frontend
+
+LeViz is a visual lesson planner: a lesson is an ordered list of text segments and
+spatial layout segments, where furniture and stations on a canvas carry notes and
+assigned students. This skill covers the **`frontend/` Vite SPA** only. All paths
+below are relative to `LeViz/frontend/`.
+
+## ✅ Status: verified (2026-11-26)
+
+Every command below was executed against Phase 1 of the implementation plan on this
+machine. Evidence from that run:
+
+- `npm test` → **8 files, 59 tests passed** (grouping 15, serialization 8, geometry 6,
+  repository contract 5, lesson-store 10, layout templates 7, text templates 5,
+  activity guidelines 3).
+- `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.15 MB
+  (358 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 21 checks
+  passed**, zero console errors, zero page errors, 15 non-blank screenshots.
+
+The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
+(asserting 12 chairs + teacher), adds four students,
+drags one onto a seat, saves a node note, moves a node and undoes it, generates and
+checks the prefilled Harkness activity guidance, applies groups, adds a text segment via
+the template menu, reloads to prove persistence, then exports and
+re-imports the JSON.
+
+## Prerequisites
+
+Verified on this machine (2026-11-26): Node v25.8.1, npm 11.14.1, Google Chrome
+installed, Playwright 1.65.1 as a dev dependency.
+
+- Node ≥ 20 and npm.
+- For the agent path only: Playwright is already in `devDependencies`. No browser
+  download is needed — the driver prefers the installed Google Chrome
+  (`channel: 'chrome'`) and falls back to bundled Chromium.
+
+## Setup
+
+```bash
+cd frontend
+npm install
+```
+
+Stack (locked in `package.json`): React 19.3, Vite 8, TypeScript 5.9 strict
+(`noUncheckedIndexedAccess`), Tailwind CSS 4 (`@tailwindcss/vite`), Konva 10 +
+react-konva 19, Zustand 5 + zundo 2.3, TipTap 3.35 (all `@tiptap/*` on the same minor),
+dnd-kit, `idb`, Vitest 5 + fake-indexeddb, self-hosted Inter/Merriweather via
+`@fontsource`.
+
+## Build
+
+```bash
+npm run build
+```
+
+Emits static files in `dist/`. `tsc -b` runs first; the build fails on any TypeScript
+error. Deep-link refreshes require a static host with SPA fallback (`/index.html`);
+`npm run preview` serves it correctly.
+
+## Test
+
+```bash
+npm test            # vitest run — all unit + repository-contract tests
+npm run typecheck   # tsc -b --force
+```
+
+Tests live next to their modules (`src/**/*.test.ts`). The repository suite is shared:
+any future PocketBase repository must call `runLessonRepositoryContract` from
+`src/repositories/contract.test-utils.ts`.
+
+## Run — agent path (primary)
+
+1. Start the dev server in the background:
+
+   ```bash
+   cd frontend
+   (npm run dev > /tmp/leviz-frontend-dev.log 2>&1 &)
+   ```
+
+   Vite serves on **http://localhost:5173** (verified). Wait until it answers:
+
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5173/
+   ```
+
+2. Drive it:
+
+   ```bash
+   node .claude/skills/run-leviz-frontend/driver.mjs --url http://localhost:5173
+   node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson --url http://localhost:5173
+   ```
+
+Driver flags:
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--flow load\|lesson` | `load` | `load` = open + screenshot. `lesson` = full end-to-end smoke. |
+| `--url URL` | `http://localhost:5173` | Page to open |
+| `--out DIR` | `screenshots` | Where PNGs and the exported JSON land |
+| `--headed` | off | Show a real window |
+| `--timeout MS` | `30000` | Navigation timeout |
+| `--no-fail-on-console` | off | Do not fail on `console.error` |
+
+The driver prints a JSON summary. With `--flow lesson` it includes a `checks` array:
+
+```json
+{ "ok": true, "flow": "lesson", "browser": "system Chrome",
+  "url": "http://localhost:5173", "title": "…",
+  "screenshots": ["screenshots/leviz-lesson-01-lesson-start-….png", "…"],
+  "checks": [{ "name": "text survives reload", "ok": true }, "…"],
+  "consoleErrors": [], "pageErrors": [] }
+```
+
+Exit code `1` means a check failed, the page failed to load, or a console/page error
+fired. **Open the screenshots** — a blank PNG is a failure even when exit code is 0.
+
+### What the lesson flow assumes
+
+- A 1440×900 viewport (the driver creates its own context).
+- The flow sets class size to 12 first; Harkness geometry therefore matches the
+  original 12-chair coordinates. Other class sizes shift the chair layout.
+- Canvas coordinates derived from the Harkness template at 100% zoom: Seat 1 at
+  `(700, 367)`, Seat 5 at `(842, 614)`. If the template layout, canvas padding, or
+  stage fit changes, update those constants in `driver.mjs`.
+- Some checks read toast/message text (e.g. `Ada Lovelace → Seat 5`). Toast copy
+  changes belong in the driver too.
+- Each run uses a fresh browser context, so IndexedDB starts empty and the run does
+  not pollute other data.
+
+## Run — human path
+
+```bash
+cd frontend && npm run dev
+```
+
+Open the printed URL (5173); Ctrl-C to stop.
+
+## Direct invocation
+
+`npm test` is the verified way to exercise domain logic without the app. Konva needs
+a real browser: do not try to validate the canvas with jsdom.
+
+## Known constraints
+
+- **No backend in Phase 1.** Lessons persist in IndexedDB (`leviz` / `lessons`) per
+  browser profile; export is the backup and sharing path.
+- `VITE_POCKETBASE_URL` is read by the repository factory but PocketBase persistence
+  ships in Phase 2. If set, the app warns and continues with IndexedDB.
+- The app is a static SPA: `dist/` must be served with SPA fallback for `/lessons/:id`.
+- Autosave is debounced (~0.9 s) and also flushes on `visibilitychange`/`pagehide`.
+  A hard reload script should wait ~1.5 s after the last keystroke before asserting.
+- Fonts are self-hosted (`@fontsource`) — no CDN calls at runtime.
+- Git is not initialized in this project; do not assume commits or worktrees exist.
+
+## When to re-verify
+
+- `package.json` dependency ranges change (especially react-konva ↔ React major,
+  TipTap minors, Tailwind major).
+- Canvas geometry, template coordinates, or the editor shell layout change → update
+  the driver's coordinates and re-run `--flow lesson`.
+- New routes, panels, or persistence implementations are added.
+- Node major version changes (Vitest advertises engine ranges that exclude some
+  odd-numbered Node releases; v25.8.1 works, install-time warnings are harmless).
