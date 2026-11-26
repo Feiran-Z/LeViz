@@ -17,10 +17,30 @@ export interface SnapGuide {
   position: number;
 }
 
+export interface SnapBounds {
+  width: number;
+  height: number;
+}
+
+export interface SnapOptions {
+  /** Maximum movement in world units that a snap may apply. */
+  threshold?: number;
+  /** Room dimensions. When supplied, the room edges also act as snap lines. */
+  bounds?: SnapBounds;
+}
+
 export interface SnapResult {
   x: number;
   y: number;
   guides: SnapGuide[];
+}
+
+interface SpacingSnap {
+  delta: number;
+  /** Equal gap after the snap. */
+  gap: number;
+  near: number;
+  far: number;
 }
 
 export function rectForNode(node: CanvasNode): Rect {
@@ -39,61 +59,185 @@ function horizontalLines(rect: Rect): number[] {
   return [rect.y, rect.y + rect.height / 2, rect.y + rect.height];
 }
 
-/**
- * Pure snap calculator. Given a dragged rect and every other rect, returns the
- * adjusted position and the guide lines that should be drawn. No Konva import.
- */
-export function calculateSnap(moving: Rect, others: Rect[], threshold = 8): SnapResult {
-  let bestDx = Number.POSITIVE_INFINITY;
-  let bestDy = Number.POSITIVE_INFINITY;
-  const movingV = verticalLines(moving);
-  const movingH = horizontalLines(moving);
+function overlapsVertically(a: Rect, b: Rect): boolean {
+  return a.y < b.y + b.height && b.y < a.y + a.height;
+}
 
-  for (const other of others) {
-    for (const movingLine of movingV) {
-      for (const otherLine of verticalLines(other)) {
-        const delta = otherLine - movingLine;
-        if (Math.abs(delta) <= threshold && Math.abs(delta) < Math.abs(bestDx)) bestDx = delta;
-      }
-    }
-    for (const movingLine of movingH) {
-      for (const otherLine of horizontalLines(other)) {
-        const delta = otherLine - movingLine;
-        if (Math.abs(delta) <= threshold && Math.abs(delta) < Math.abs(bestDy)) bestDy = delta;
+function overlapsHorizontally(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width;
+}
+
+function bestAlignmentDelta(
+  movingLines: number[],
+  targetLines: number[],
+  threshold: number,
+): number | null {
+  let best: number | null = null;
+  for (const movingLine of movingLines) {
+    for (const targetLine of targetLines) {
+      const delta = targetLine - movingLine;
+      if (Math.abs(delta) <= threshold && (best === null || Math.abs(delta) < Math.abs(best))) {
+        best = delta;
       }
     }
   }
+  return best;
+}
+
+/**
+ * Equalise the gap to the nearest furniture (or room wall) on each side.
+ * Requires at least one piece of furniture in the same row so a lone node is
+ * not pulled to the middle of the room.
+ */
+function horizontalSpacingSnap(
+  moving: Rect,
+  others: Rect[],
+  bounds: SnapBounds,
+  threshold: number,
+): SpacingSnap | null {
+  let near = 0;
+  let far = bounds.width;
+  let hasFurniture = false;
+
+  for (const other of others) {
+    if (!overlapsVertically(moving, other)) continue;
+    const otherRight = other.x + other.width;
+    if (otherRight <= moving.x && otherRight >= near) {
+      near = otherRight;
+      hasFurniture = true;
+    }
+    const otherLeft = other.x;
+    if (otherLeft >= moving.x + moving.width && otherLeft <= far) {
+      far = otherLeft;
+      hasFurniture = true;
+    }
+  }
+
+  if (!hasFurniture) return null;
+  const gapNear = moving.x - near;
+  const gapFar = far - (moving.x + moving.width);
+  if (gapNear < 0 || gapFar < 0) return null;
+
+  const delta = (gapFar - gapNear) / 2;
+  if (Math.abs(delta) > threshold) return null;
+  return { delta, gap: (gapNear + gapFar) / 2, near, far };
+}
+
+function verticalSpacingSnap(
+  moving: Rect,
+  others: Rect[],
+  bounds: SnapBounds,
+  threshold: number,
+): SpacingSnap | null {
+  let near = 0;
+  let far = bounds.height;
+  let hasFurniture = false;
+
+  for (const other of others) {
+    if (!overlapsHorizontally(moving, other)) continue;
+    const otherBottom = other.y + other.height;
+    if (otherBottom <= moving.y && otherBottom >= near) {
+      near = otherBottom;
+      hasFurniture = true;
+    }
+    const otherTop = other.y;
+    if (otherTop >= moving.y + moving.height && otherTop <= far) {
+      far = otherTop;
+      hasFurniture = true;
+    }
+  }
+
+  if (!hasFurniture) return null;
+  const gapNear = moving.y - near;
+  const gapFar = far - (moving.y + moving.height);
+  if (gapNear < 0 || gapFar < 0) return null;
+
+  const delta = (gapFar - gapNear) / 2;
+  if (Math.abs(delta) > threshold) return null;
+  return { delta, gap: (gapNear + gapFar) / 2, near, far };
+}
+
+/**
+ * Pure snap calculator. Given a dragged rect, every other rect, and the room
+ * bounds, returns the adjusted position and the guide lines to draw.
+ *
+ * Snaps to: other furniture (edges and centers), the room's edges, and
+ * positions that make the gap to the nearest furniture on each side equal.
+ * No Konva import.
+ */
+export function calculateSnap(
+  moving: Rect,
+  others: Rect[],
+  options: SnapOptions = {},
+): SnapResult {
+  const threshold = options.threshold ?? 8;
+  const bounds = options.bounds;
+
+  const targetV: number[] = others.flatMap(verticalLines);
+  const targetH: number[] = others.flatMap(horizontalLines);
+  if (bounds) {
+    targetV.push(0, bounds.width);
+    targetH.push(0, bounds.height);
+  }
+
+  const alignX = bestAlignmentDelta(verticalLines(moving), targetV, threshold);
+  const alignY = bestAlignmentDelta(horizontalLines(moving), targetH, threshold);
+  const spacingX = bounds ? horizontalSpacingSnap(moving, others, bounds, threshold) : null;
+  const spacingY = bounds ? verticalSpacingSnap(moving, others, bounds, threshold) : null;
+
+  let dx = 0;
+  let dy = 0;
+  let useSpacingX = false;
+  let useSpacingY = false;
+
+  if (alignX !== null && (spacingX === null || Math.abs(alignX) <= Math.abs(spacingX.delta))) {
+    dx = alignX;
+  } else if (spacingX) {
+    dx = spacingX.delta;
+    useSpacingX = true;
+  }
+
+  if (alignY !== null && (spacingY === null || Math.abs(alignY) <= Math.abs(spacingY.delta))) {
+    dy = alignY;
+  } else if (spacingY) {
+    dy = spacingY.delta;
+    useSpacingY = true;
+  }
 
   const snapped: Rect = {
-    x: Number.isFinite(bestDx) ? moving.x + bestDx : moving.x,
-    y: Number.isFinite(bestDy) ? moving.y + bestDy : moving.y,
+    x: moving.x + dx,
+    y: moving.y + dy,
     width: moving.width,
     height: moving.height,
   };
 
   const guides: SnapGuide[] = [];
   const seen = new Set<string>();
-  for (const other of others) {
+  const addGuide = (orientation: 'vertical' | 'horizontal', position: number) => {
+    const key = `${orientation}:${position}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    guides.push({ orientation, position });
+  };
+
+  if (useSpacingX && spacingX) {
+    addGuide('vertical', spacingX.near + spacingX.gap / 2);
+    addGuide('vertical', spacingX.far - spacingX.gap / 2);
+  } else {
     for (const movingLine of verticalLines(snapped)) {
-      for (const otherLine of verticalLines(other)) {
-        if (Math.abs(movingLine - otherLine) < 0.5) {
-          const key = `v:${otherLine}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            guides.push({ orientation: 'vertical', position: otherLine });
-          }
-        }
+      for (const targetLine of targetV) {
+        if (Math.abs(movingLine - targetLine) < 0.5) addGuide('vertical', targetLine);
       }
     }
+  }
+
+  if (useSpacingY && spacingY) {
+    addGuide('horizontal', spacingY.near + spacingY.gap / 2);
+    addGuide('horizontal', spacingY.far - spacingY.gap / 2);
+  } else {
     for (const movingLine of horizontalLines(snapped)) {
-      for (const otherLine of horizontalLines(other)) {
-        if (Math.abs(movingLine - otherLine) < 0.5) {
-          const key = `h:${otherLine}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            guides.push({ orientation: 'horizontal', position: otherLine });
-          }
-        }
+      for (const targetLine of targetH) {
+        if (Math.abs(movingLine - targetLine) < 0.5) addGuide('horizontal', targetLine);
       }
     }
   }

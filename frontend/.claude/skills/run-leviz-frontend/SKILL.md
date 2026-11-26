@@ -15,7 +15,7 @@ below are relative to `LeViz/frontend/`.
 Every command below was executed against Phase 1 of the implementation plan on this
 machine. Evidence from that run:
 
-- `npm test` → **8 files, 59 tests passed** (grouping 15, serialization 8, geometry 6,
+- `npm test` → **8 files, 66 tests passed** (grouping 15, serialization 8, geometry 13,
   repository contract 5, lesson-store 10, layout templates 7, text templates 5,
   activity guidelines 3).
 - `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.15 MB

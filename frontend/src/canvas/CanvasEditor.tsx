@@ -91,7 +91,7 @@ export function CanvasEditor({ segment }: { segment: LayoutSegment }) {
       <CanvasToolbar segment={segment} />
       <div
         ref={containerRef}
-        className="relative min-h-0 flex-1 overflow-hidden bg-canvas"
+        className="relative min-h-0 flex-1 overflow-hidden bg-desk"
         data-canvas-surface="true"
       >
         <Stage
@@ -126,10 +126,13 @@ export function CanvasEditor({ segment }: { segment: LayoutSegment }) {
               y={0}
               width={canvasWidth}
               height={canvasHeight}
-              cornerRadius={4}
+              cornerRadius={6}
               fill={tokens.background}
-              stroke={tokens.nodeStroke}
+              stroke={tokens.paperBorder}
               strokeWidth={1}
+              shadowColor={tokens.shadow}
+              shadowBlur={28}
+              shadowOffsetY={4}
             />
             <Shape
               sceneFunc={(context) => {
@@ -153,6 +156,8 @@ export function CanvasEditor({ segment }: { segment: LayoutSegment }) {
                 nodeId={node.id}
                 selected={selectedNodeId === node.id}
                 tokens={tokens}
+                canvasWidth={canvasWidth}
+                canvasHeight={canvasHeight}
               />
             ))}
           </Layer>
@@ -205,7 +210,7 @@ export function CanvasEditor({ segment }: { segment: LayoutSegment }) {
           </div>
         )}
 
-        <p className="pointer-events-none absolute bottom-2 left-3 text-[11px] text-secondary">
+        <p className="pointer-events-none absolute bottom-2 left-3 rounded-sm bg-page/85 px-1.5 py-0.5 text-[11px] text-secondary">
           Drag to pan · Scroll to zoom · Double-click a seat to add a note
         </p>
       </div>

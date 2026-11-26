@@ -4,6 +4,8 @@
  */
 export interface CanvasTokens {
   background: string;
+  paperBorder: string;
+  shadow: string;
   grid: string;
   nodeFill: string;
   nodeStroke: string;
@@ -18,8 +20,10 @@ export interface CanvasTokens {
 }
 
 const LIGHT: CanvasTokens = {
-  background: '#fbf9f4',
-  grid: '#e8e5de',
+  background: '#e8e2d5',
+  paperBorder: '#cfc7b8',
+  shadow: 'rgba(63, 58, 52, 0.22)',
+  grid: '#d8d1c3',
   nodeFill: '#f4f2ed',
   nodeStroke: '#d6d1c7',
   nodeLabel: '#3f3a34',
@@ -33,8 +37,10 @@ const LIGHT: CanvasTokens = {
 };
 
 const DARK: CanvasTokens = {
-  background: '#201d1a',
-  grid: '#2c2824',
+  background: '#241f18',
+  paperBorder: '#3b342b',
+  shadow: 'rgba(0, 0, 0, 0.55)',
+  grid: '#2f2a22',
   nodeFill: '#2c2824',
   nodeStroke: '#4a443d',
   nodeLabel: '#e8e2d9',

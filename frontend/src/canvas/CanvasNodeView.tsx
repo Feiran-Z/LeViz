@@ -21,6 +21,8 @@ interface CanvasNodeViewProps {
   nodeId: string;
   selected: boolean;
   tokens: CanvasTokens;
+  canvasWidth: number;
+  canvasHeight: number;
 }
 
 export const CanvasNodeView = memo(function CanvasNodeView({
@@ -28,6 +30,8 @@ export const CanvasNodeView = memo(function CanvasNodeView({
   nodeId,
   selected,
   tokens,
+  canvasWidth,
+  canvasHeight,
 }: CanvasNodeViewProps) {
   const node = useLessonStore((state) => {
     const lesson = state.lesson;
@@ -81,6 +85,7 @@ export const CanvasNodeView = memo(function CanvasNodeView({
     const snapped = calculateSnap(
       { x: group.x(), y: group.y(), width: node.width, height: node.height },
       others,
+      { bounds: { width: canvasWidth, height: canvasHeight } },
     );
     group.position({ x: snapped.x, y: snapped.y });
     setSnapGuides(snapped.guides);

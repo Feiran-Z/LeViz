@@ -93,7 +93,7 @@ export function LayoutThumbnail({ canvas }: { canvas: CanvasState }) {
     >
       <defs>
         <pattern id={patternId} width={40} height={40} patternUnits="userSpaceOnUse">
-          <circle cx={20} cy={20} r={1.4} fill="var(--border-default)" />
+          <circle cx={20} cy={20} r={1.4} fill="var(--border-strong)" />
         </pattern>
       </defs>
       <rect width={canvas.width} height={canvas.height} fill="var(--bg-canvas)" />

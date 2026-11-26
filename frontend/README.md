@@ -107,7 +107,7 @@ continues with IndexedDB.
 ## Verification
 
 ```bash
-npm test                                   # 59 unit/contract tests
+npm test                                   # 66 unit/contract tests
 npm run build                              # strict TS + production build
 node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson
 ```

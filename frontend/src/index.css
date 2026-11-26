@@ -5,7 +5,8 @@
 :root {
   --bg-page: #faf9f6;
   --bg-surface: #f4f2ed;
-  --bg-canvas: #fbf9f4;
+  --bg-canvas: #e8e2d5;
+  --bg-desk: #d5cdbf;
   --bg-elevated: #ffffff;
   --bg-chrome: #e5ebdf;
   --border-default: #e8e5de;
@@ -35,7 +36,8 @@
 [data-theme='dark'] {
   --bg-page: #1a1816;
   --bg-surface: #23201d;
-  --bg-canvas: #201d1a;
+  --bg-canvas: #241f18;
+  --bg-desk: #0f0d0b;
   --bg-elevated: #2c2824;
   --bg-chrome: #2a3129;
   --border-default: #35302b;
@@ -68,6 +70,7 @@
   --color-page: var(--bg-page);
   --color-surface: var(--bg-surface);
   --color-canvas: var(--bg-canvas);
+  --color-desk: var(--bg-desk);
   --color-elevated: var(--bg-elevated);
   --color-chrome: var(--bg-chrome);
   --color-default: var(--border-default);

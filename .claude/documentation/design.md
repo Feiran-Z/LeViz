@@ -44,7 +44,8 @@ The entire neutral ramp is warmed. No cool blue-grays. The base hue is approxima
 |---|---|---|
 | `--bg-page` | `#FAF9F6` | App background |
 | `--bg-surface` | `#F4F2ED` | Panels, cards, popovers |
-| `--bg-canvas` | `#FBF9F4` | Konva canvas stage background |
+| `--bg-canvas` | `#E8E2D5` | Konva canvas floor — warm parchment, a step deeper than the page |
+| `--bg-desk` | `#D5CDBF` | Drafting-desk workspace around the canvas floor |
 | `--bg-chrome` | `#E5EBDF` | Editor top bar — a distinct sage-tinted chrome so the lesson identity bar stands out |
 | `--bg-elevated` | `#FFFFFF` | Modals only (rare); never full-page |
 | `--border-default` | `#E8E5DE` | Dividers, card outlines |
@@ -62,7 +63,8 @@ The dark theme follows the Umber Calm principle: **warm near-black, never pure b
 |---|---|---|
 | `--bg-page` | `#1A1816` | App background |
 | `--bg-surface` | `#23201D` | Panels, cards |
-| `--bg-canvas` | `#201D1A` | Canvas stage background |
+| `--bg-canvas` | `#241F18` | Canvas floor — warm dark parchment, lighter than the page |
+| `--bg-desk` | `#0F0D0B` | Drafting-desk workspace around the canvas floor |
 | `--bg-chrome` | `#2A3129` | Editor top bar — deep sage-charcoal chrome |
 | `--bg-elevated` | `#2C2824` | Popovers, tooltips |
 | `--border-default` | `#35302B` | Dividers |
@@ -100,8 +102,10 @@ The canvas has its own palette so it can feel distinct from the surrounding UI w
 
 | Element | Light theme | Dark theme |
 |---|---|---|
-| Canvas background | `#FBF9F4` | `#201D1A` |
-| Grid dots (if shown) | `#E8E5DE` | `#2C2824` |
+| Canvas floor | `#E8E2D5` | `#241F18` |
+| Canvas frame (desk) | `#D5CDBF` | `#0F0D0B` |
+| Paper border / shadow | `#CFC7B8` / soft warm shadow | `#3B342B` / deep shadow |
+| Grid dots (if shown) | `#D8D1C3` | `#2F2A22` |
 | Node fill (default) | `#F4F2ED` | `#2C2824` |
 | Node stroke | `#D6D1C7` | `#4A443D` |
 | Node label | `#3F3A34` | `#E8E2D9` |
@@ -111,7 +115,7 @@ The canvas has its own palette so it can feel distinct from the surrounding UI w
 | Snap guide line | `#B0A99D` at 40% | `#6B645B` at 40% |
 | Drop target highlight | `#5B6E5A` at 15% | `#8FA68D` at 20% |
 
-The canvas background is deliberately the lightest (or darkest) neutral so placed nodes read as objects on a surface, not as holes in the UI.
+The canvas floor is a warm parchment framed by a darker drafting-desk workspace, so the canvas reads as a distinct surface against the page. Nodes stay lighter than the floor in both themes, so they read as objects on the surface, not as holes in the UI.
 
 ---
 
@@ -289,7 +293,8 @@ All colors must be defined as CSS custom properties on `:root` and `[data-theme=
 :root {
   --bg-page: #FAF9F6;
   --bg-surface: #F4F2ED;
-  --bg-canvas: #FBF9F4;
+  --bg-canvas: #E8E2D5;
+  --bg-desk: #D5CDBF;
   --bg-chrome: #E5EBDF;
   --border-default: #E8E5DE;
   --border-strong: #D6D1C7;
@@ -307,7 +312,8 @@ All colors must be defined as CSS custom properties on `:root` and `[data-theme=
 [data-theme="dark"] {
   --bg-page: #1A1816;
   --bg-surface: #23201D;
-  --bg-canvas: #201D1A;
+  --bg-canvas: #241F18;
+  --bg-desk: #0F0D0B;
   --bg-chrome: #2A3129;
   --border-default: #35302B;
   --border-strong: #4A443D;
