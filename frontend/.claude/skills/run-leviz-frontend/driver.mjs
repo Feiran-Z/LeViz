@@ -156,11 +156,38 @@ async function runLessonFlow(page, opts, shoot, checks) {
   };
 
   await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
+
+  // The list is only visible before the editor opens; check its footer here.
+  const footer = page.locator('footer').first();
+  await footer.waitFor({ timeout: 10000 });
+  const footerText = await footer.innerText();
+  check(
+    'footer shows copyright and MIT license',
+    /© \d{4} Feiran Zhang/.test(footerText) && footerText.includes('MIT License'),
+    footerText,
+  );
+  const noticesLink = page.getByRole('link', { name: 'Third-party notices' }).first();
+  const noticesHref = await noticesLink.getAttribute('href');
+  check(
+    'footer notices link is base-aware',
+    Boolean(noticesHref && noticesHref.endsWith('/licenses/THIRD_PARTY_NOTICES.txt')),
+    noticesHref ?? '',
+  );
+  const noticesResponse = await page.request.get(new URL(noticesHref ?? '', page.url()).toString());
+  check('footer notices link resolves', noticesResponse.status() === 200, String(noticesResponse.status()));
+  const footerBox = await footer.boundingBox();
+  check(
+    'footer is pinned to the bottom on an empty list',
+    Boolean(footerBox && footerBox.y + footerBox.height >= 890),
+    JSON.stringify(footerBox),
+  );
+
   await page.getByRole('button', { name: 'New lesson' }).first().click();
   await page.waitForURL(/\/lessons\//, { timeout: 10000 });
   await page.waitForTimeout(900);
   await shoot('01-lesson-start');
   check('lesson editor opened', /\/lessons\//.test(page.url()), page.url());
+  check('editor has no footer', (await page.locator('footer').count()) === 0);
 
   // Class size drives template geometry (12 seats + teacher = 13 nodes).
   const classSizeInput = page.getByLabel('Class size in students');
@@ -372,7 +399,12 @@ async function runLessonFlow(page, opts, shoot, checks) {
     'overview plots the engagement timeline',
     (await page.locator('svg[role="img"][aria-label^="Designed engagement timeline"]').count()) === 1,
   );
+  const overviewFooter = page.locator('footer').first();
+  check('overview shows the footer', (await overviewFooter.innerText()).includes('MIT License'));
   await shoot('13-overview');
+  await page.emulateMedia({ media: 'print' });
+  check('print includes the footer', await overviewFooter.isVisible());
+  await page.emulateMedia({ media: 'screen' });
   await page.getByRole('button', { name: 'Back to editor' }).click();
   await page.waitForTimeout(400);
   check('overview returns to the editor', (await page.getByRole('tab', { name: 'Roster' }).count()) > 0);

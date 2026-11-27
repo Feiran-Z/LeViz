@@ -5,6 +5,7 @@ import {
 } from '../../domain/engagement';
 import { ACTIVITY_LABELS, isAssignableNode, type LayoutSegment } from '../../domain/types';
 import { EngagementSummary } from '../engagement/EngagementSummary';
+import { AppFooter } from '../layout/AppFooter';
 import { formatMinutes, formatShortDate } from '../../lib/format';
 import { lessonTotalMinutes, useLessonStore } from '../../stores/lessonStore';
 import { useRosterStore } from '../../stores/rosterStore';
@@ -265,6 +266,8 @@ export function LessonOverview() {
         <p className="mt-6 text-center text-[11px] text-secondary print:hidden">
           Read-only overview · changes are made in the editor
         </p>
+
+        <AppFooter variant="document" />
       </div>
     </div>
   );

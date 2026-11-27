@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AppFooter } from '../components/layout/AppFooter';
 import { PilotNotice } from '../components/pilot/PilotNotice';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Icon } from '../components/ui/Icons';
@@ -95,7 +96,7 @@ export function LessonListPage() {
   };
 
   return (
-    <div className="min-h-full bg-page">
+    <div className="flex min-h-full flex-col bg-page">
       <header className="sticky top-0 z-10 border-b border-default bg-page/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-5">
           <Link to="/" className="flex items-center gap-2.5" aria-label="LeViz home">
@@ -141,7 +142,7 @@ export function LessonListPage() {
 
       <PilotNotice />
 
-      <main className="mx-auto max-w-5xl px-5 pb-20 pt-10">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-20 pt-10">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold tracking-[-0.02em]">Your lessons</h1>
@@ -266,6 +267,8 @@ export function LessonListPage() {
           </ul>
         )}
       </main>
+
+      <AppFooter />
 
       <ConfirmDialog
         open={pendingDelete !== null}

@@ -20,7 +20,7 @@ machine. Evidence from that run:
   activity guidelines 3, designed engagement 16, engagement timeline 7, timeline axis 3).
 - `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.15 MB
   (358 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
-- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 25 checks
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 32 checks
   passed**, zero console errors, zero page errors, 16 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
@@ -28,7 +28,9 @@ The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness 
 drags one onto a seat, saves a node note, moves a node and undoes it, generates and
 checks the prefilled Harkness activity guidance, applies groups, adds a text segment via
 the template menu, reloads to prove persistence, then exports and
-re-imports the JSON.
+re-imports the JSON. It also checks the copyright/license footer on the lesson list
+(including the served third-party notices file) and the overview, verifies the footer
+prints, and asserts the editor has no footer.
 
 ## Prerequisites
 
