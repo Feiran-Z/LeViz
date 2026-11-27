@@ -13,7 +13,8 @@ import { LAYOUT_TEMPLATES } from '../domain/templates';
 import { TEXT_TEMPLATES } from '../domain/textTemplates';
 import type { Lesson } from '../domain/types';
 import { lessonTotalMinutes, useLessonStore } from '../stores/lessonStore';
-import { closeLesson, openLesson } from '../stores/lessonSession';
+import { openLesson } from '../stores/lessonSession';
+import { useLessonDocument } from '../hooks/useLessonDocument';
 import { useLibraryStore } from '../stores/libraryStore';
 import { useRosterStore } from '../stores/rosterStore';
 import { useUiStore } from '../stores/uiStore';
@@ -148,16 +149,7 @@ export function EditorPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   useUndoRedoHotkeys();
-
-  useEffect(() => {
-    if (!lessonId) return undefined;
-    useUiStore.getState().resetForLesson();
-    void openLesson(lessonId);
-    return () => {
-      useUiStore.getState().setNodeHover(null);
-      closeLesson();
-    };
-  }, [lessonId]);
+  useLessonDocument(lessonId, { saveOnClose: true });
 
   useEffect(() => {
     document.title = lesson ? `${lesson.title} · LeViz` : 'LeViz';

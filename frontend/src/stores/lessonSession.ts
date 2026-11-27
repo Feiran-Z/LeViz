@@ -44,19 +44,20 @@ export async function openLesson(id: string): Promise<void> {
   }
 }
 
-export function closeLesson(): void {
+export function closeLesson({ save = true }: { save?: boolean } = {}): void {
   const token = ++requestToken;
   const state = useLessonStore.getState();
-  if (state.status === 'ready') void state.save();
+  if (save && state.status === 'ready') void state.save();
 
   // Defer clearing by one task: child editors flush debounced content in their
   // own unmount cleanup, which React runs after this parent cleanup. The second
   // save captures that late flush. If another lesson opens first, the token
-  // changes and the old state is simply replaced by hydrate.
+  // changes and the old state is simply replaced by hydrate. Read-only pages
+  // (teach mode) pass save: false so entering or leaving never writes.
   setTimeout(() => {
     if (token !== requestToken) return;
     const latest = useLessonStore.getState();
-    if (latest.status === 'ready') void latest.save();
+    if (save && latest.status === 'ready') void latest.save();
     latest.hydrate(null, 'idle');
     useRosterStore.getState().load([]);
   }, 0);
