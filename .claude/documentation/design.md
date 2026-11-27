@@ -117,6 +117,23 @@ The canvas has its own palette so it can feel distinct from the surrounding UI w
 
 The canvas floor is a warm parchment framed by a darker drafting-desk workspace, so the canvas reads as a distinct surface against the page. Nodes stay lighter than the floor in both themes, so they read as objects on the surface, not as holes in the UI.
 
+### 2.6 Engagement Timeline Series
+
+The lesson overview's engagement timeline needs three categorical hues that stay
+distinguishable under color-vision deficiency. These are **chart-only series tokens**;
+they never appear as UI chrome, status, or decoration. Both sets were validated
+against the card surfaces (`#F4F2ED` light, `#23201D` dark): lightness band, chroma
+floor ≥ 0.10, CVD separation, normal-vision separation, and ≥ 3:1 contrast all pass.
+
+| Dimension | Light | Dark |
+|---|---|---|
+| Cognitive | `#1F5CA8` | `#5B92D9` |
+| Behavioral | `#B05A2E` | `#D0814E` |
+| Affective | `#00806A` | `#35A894` |
+
+Line identity is also carried by dash pattern (solid / dashed / dotted) and a legend,
+so the chart never relies on hue alone.
+
 ---
 
 ## 3. Typography

@@ -1,3 +1,4 @@
+import { normalizeLessonEngagement } from '../domain/engagement';
 import { resolveClassSize } from '../domain/lesson';
 import type { Lesson } from '../domain/types';
 import { getLessonRepository } from '../repositories';
@@ -24,10 +25,12 @@ export async function openLesson(id: string): Promise<void> {
       return;
     }
     // Documents saved before classSize existed infer it from the roster.
-    const normalized: Lesson = {
+    const withClassSize: Lesson = {
       ...lesson,
       classSize: resolveClassSize(lesson.classSize, lesson.roster.length),
     };
+    // Documents saved before designed engagement existed gain its defaults.
+    const normalized = normalizeLessonEngagement(withClassSize);
     useRosterStore.getState().load(normalized.roster);
     useLessonStore.getState().hydrate(normalized, 'ready');
   } catch (cause) {

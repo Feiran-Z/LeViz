@@ -1,3 +1,4 @@
+import { normalizeLessonEngagement } from './engagement';
 import { resolveClassSize } from './lesson';
 import type { Lesson } from './types';
 
@@ -22,8 +23,9 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 /**
- * Lossless parse. The lesson object is returned exactly as it appears in the
- * file, so `parse(serialize(lesson))` is deep-equal to `lesson`.
+ * Lossless parse for current documents: `parse(serialize(lesson))` is deep-equal
+ * to `lesson`. Older files are upgraded in place — fields added after they were
+ * written (classSize, designed engagement) are filled with sensible defaults.
  */
 export function parseLesson(json: string): Lesson {
   let parsed: unknown;
@@ -71,5 +73,6 @@ export function parseLesson(json: string): Lesson {
   // Older exports predate classSize; infer it from the roster or use the default.
   lesson['classSize'] = resolveClassSize(rawClassSize, lesson['roster'].length);
 
-  return lesson as unknown as Lesson;
+  // Fill designed engagement for documents written before it existed.
+  return normalizeLessonEngagement(lesson as unknown as Lesson);
 }

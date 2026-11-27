@@ -4,6 +4,7 @@ import { NODE_TYPE_INFO } from '../../domain/types';
 import { useLessonStore } from '../../stores/lessonStore';
 import { useRosterStore } from '../../stores/rosterStore';
 import { useUiStore } from '../../stores/uiStore';
+import { NodeEngagementSection } from '../engagement/NodeEngagementSection';
 import { Icon } from '../ui/Icons';
 
 export function NodeInspector({ segment }: { segment: LayoutSegment | null }) {
@@ -150,6 +151,8 @@ export function NodeInspector({ segment }: { segment: LayoutSegment | null }) {
           />
         </div>
       </div>
+
+      <NodeEngagementSection segment={segment} node={node} />
 
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between">

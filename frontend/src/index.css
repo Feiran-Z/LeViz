@@ -30,6 +30,10 @@
   --chip-text: #3f3a34;
   --guide: rgb(176 169 157 / 40%);
   --drop-target: rgb(91 110 90 / 15%);
+  /* Engagement timeline series — chart-only, CVD-validated (design.md §2.6). */
+  --series-cognitive: #1f5ca8;
+  --series-behavioral: #b05a2e;
+  --series-affective: #00806a;
   color-scheme: light;
 }
 
@@ -61,6 +65,10 @@
   --chip-text: #e8e2d9;
   --guide: rgb(107 100 91 / 40%);
   --drop-target: rgb(143 166 141 / 20%);
+  /* Dark steps of the same three hues, re-stepped for the dark card surface. */
+  --series-cognitive: #5b92d9;
+  --series-behavioral: #d0814e;
+  --series-affective: #35a894;
   color-scheme: dark;
 }
 

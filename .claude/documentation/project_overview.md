@@ -67,6 +67,14 @@ Either way, the result is a layout that knows who is where.
 
 Openings, direct instruction notes, debrief questions, and exit tickets are simple rich-text segments. They do not need a canvas. They sit in the same flow as the layout segments so the whole lesson reads as one plan.
 
+### Design the engagement in each segment
+
+Every segment — text or layout — carries the planner's **designed level of engagement** for three dimensions: cognitive, behavioral, and affective. Each dimension is set to low, medium, or high. This is a planning annotation, not an observation or a score.
+
+For a layout segment, the segment-level design applies to the activity as a whole. Each station starts at that level and can be adjusted individually, so a station rotation can ask for more affective engagement at one stop without changing the rest. Adjusted stations are called out in the lesson overview and printout.
+
+The overview also plots all three dimensions across the lesson's planned minutes as a step chart, so the planner can see the lesson's engagement profile at a glance. The chart follows the activity-level design; station adjustments remain listed beneath each layout segment.
+
 ### Save, reopen, and share lessons
 
 Lessons persist and can be reopened and edited on any device the teacher logs into. Lessons can be exported to a file for backup or sharing with a colleague, and imported back in.

@@ -1,9 +1,16 @@
+import {
+  nodeOverridesEngagement,
+  resolveNodeEngagement,
+  resolveSegmentEngagement,
+} from '../../domain/engagement';
 import { ACTIVITY_LABELS, type LayoutSegment } from '../../domain/types';
+import { EngagementSummary } from '../engagement/EngagementSummary';
 import { formatMinutes, formatShortDate } from '../../lib/format';
 import { lessonTotalMinutes, useLessonStore } from '../../stores/lessonStore';
 import { useRosterStore } from '../../stores/rosterStore';
 import { useUiStore } from '../../stores/uiStore';
 import { Icon } from '../ui/Icons';
+import { EngagementTimelineChart } from './EngagementTimelineChart';
 import { LayoutThumbnail } from './LayoutThumbnail';
 import { RichTextView } from './RichTextView';
 
@@ -20,6 +27,9 @@ function LayoutSection({ segment }: { segment: LayoutSegment }) {
   const annotated = nodes.filter(
     (node) => node.note && (node.note.title.trim() || node.note.body.trim()),
   );
+  const adjustedStations = nodes
+    .filter(nodeOverridesEngagement)
+    .sort((a, b) => a.y - b.y || a.x - b.x);
   const studentName = (id: string) => students.find((student) => student.id === id)?.name ?? 'Unknown';
 
   return (
@@ -72,6 +82,27 @@ function LayoutSection({ segment }: { segment: LayoutSegment }) {
           ) : (
             <p className="mt-1 text-xs text-secondary">No students assigned yet.</p>
           )}
+        </div>
+      ) : null}
+
+      {adjustedStations.length > 0 ? (
+        <div className="mt-3 border-t border-default pt-3">
+          <p className="section-label">Station engagement</p>
+          <ul className="mt-1.5 space-y-1">
+            {adjustedStations.map((node) => (
+              <li
+                key={node.id}
+                className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-sm border border-default bg-page px-2.5 py-1.5"
+              >
+                <span className="w-32 shrink-0 truncate text-xs font-medium" title={node.label}>
+                  {node.label}
+                </span>
+                <span className="text-[11px]">
+                  <EngagementSummary design={resolveNodeEngagement(segment, node)} />
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 
@@ -171,6 +202,8 @@ export function LessonOverview() {
           </div>
         </div>
 
+        <EngagementTimelineChart segments={lesson.segments} />
+
         {lesson.segments.length === 0 ? (
           <div className="mt-8 rounded-lg border border-dashed border-strong px-6 py-12 text-center">
             <p className="text-sm text-secondary">This lesson has no segments yet.</p>
@@ -198,6 +231,10 @@ export function LessonOverview() {
                       <h2 className="text-[15px] font-semibold leading-snug">{segment.title}</h2>
                       {showActivityTag ? <span className="tag">{activityLabel}</span> : null}
                       <span className="text-xs tabular text-secondary">{segment.durationMin} min</span>
+                    </div>
+                    <div className="mt-1 text-[11px]">
+                      <span className="mr-2 font-medium text-secondary">Engagement</span>
+                      <EngagementSummary design={resolveSegmentEngagement(segment)} />
                     </div>
                   </div>
                   <button

@@ -10,17 +10,17 @@ spatial layout segments, where furniture and stations on a canvas carry notes an
 assigned students. This skill covers the **`frontend/` Vite SPA** only. All paths
 below are relative to `LeViz/frontend/`.
 
-## ✅ Status: verified (2026-11-26)
+## ✅ Status: verified (2026-11-27)
 
 Every command below was executed against Phase 1 of the implementation plan on this
 machine. Evidence from that run:
 
-- `npm test` → **8 files, 66 tests passed** (grouping 15, serialization 8, geometry 13,
+- `npm test` → **10 files, 85 tests passed** (grouping 15, serialization 9, geometry 13,
   repository contract 5, lesson-store 10, layout templates 7, text templates 5,
-  activity guidelines 3).
+  activity guidelines 3, designed engagement 11, engagement timeline 7).
 - `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.15 MB
   (358 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
-- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 24 checks
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 25 checks
   passed**, zero console errors, zero page errors, 16 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
@@ -125,9 +125,11 @@ fired. **Open the screenshots** — a blank PNG is a failure even when exit code
 - A 1440×900 viewport (the driver creates its own context).
 - The flow sets class size to 12 first; Harkness geometry therefore matches the
   original 12-chair coordinates. Other class sizes shift the chair layout.
-- Canvas coordinates derived from the Harkness template at 100% zoom: Seat 1 at
-  `(700, 367)`, Seat 5 at `(842, 614)`. If the template layout, canvas padding, or
-  stage fit changes, update those constants in `driver.mjs`.
+- The driver maps canvas world units to the screen at run time via
+  `canvasPoint(page, x, y)`, using the `[data-canvas-surface]` rect and the stage fit
+  (1000×700 canvas, 28px padding). Seat 1 is `(500, 110)` and Seat 5 is `(673, 410)`
+  in world units. If the template layout or canvas size changes, update those world
+  coordinates; chrome height changes no longer require driver edits.
 - Some checks read toast/message text (e.g. `Ada Lovelace → Seat 5`). Toast copy
   changes belong in the driver too.
 - Each run uses a fresh browser context, so IndexedDB starts empty and the run does

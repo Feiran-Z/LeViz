@@ -32,8 +32,8 @@ export interface ApplyGroupsOutcome {
   nodesUsed: number;
 }
 
-type SegmentPatch = Partial<Pick<TextSegment, 'title' | 'durationMin' | 'content'>> &
-  Partial<Pick<LayoutSegment, 'title' | 'durationMin' | 'activityType' | 'instructions'>>;
+type SegmentPatch = Partial<Pick<TextSegment, 'title' | 'durationMin' | 'content' | 'engagement'>> &
+  Partial<Pick<LayoutSegment, 'title' | 'durationMin' | 'activityType' | 'instructions' | 'engagement'>>;
 
 interface LessonState {
   lesson: Lesson | null;

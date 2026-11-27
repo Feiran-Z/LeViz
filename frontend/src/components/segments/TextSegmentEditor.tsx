@@ -6,6 +6,7 @@ import { emptyRichTextDoc } from '../../domain/lesson';
 import type { RichTextDoc, TextSegment } from '../../domain/types';
 import { useLessonStore } from '../../stores/lessonStore';
 import { Icon } from '../ui/Icons';
+import { EngagementBar } from '../engagement/EngagementBar';
 import { SegmentHeader } from './SegmentHeader';
 
 const COMMIT_DELAY_MS = 350;
@@ -134,6 +135,7 @@ export function TextSegmentEditor({ segment }: { segment: TextSegment }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <SegmentHeader segment={segment} />
+      <EngagementBar segment={segment} />
       <div className="min-h-0 flex-1 overflow-y-auto bg-page">
         <div className="mx-auto w-full max-w-3xl px-6 py-8">
           <div

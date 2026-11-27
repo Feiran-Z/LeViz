@@ -33,6 +33,33 @@ describe('serialize', () => {
     expect(JSON.stringify(restored)).toBe(JSON.stringify(lesson));
   });
 
+  it('fills engagement defaults in documents written before the field existed', () => {
+    const lesson = createLesson('Old engagement');
+    const text = createTextSegment('Do Now');
+    const layout = createLayoutSegment('station-rotation');
+    layout.canvas.nodes = [createCanvasNode('station', 0, 0)];
+    delete (text as { engagement?: unknown }).engagement;
+    delete (layout as { engagement?: unknown }).engagement;
+    delete (layout.canvas.nodes[0] as { engagement?: unknown }).engagement;
+    lesson.segments = [text, layout];
+
+    const restored = parseLesson(serializeLesson(lesson));
+
+    expect(restored.segments[0]?.engagement).toEqual({
+      cognitive: 'medium',
+      behavioral: 'medium',
+      affective: 'medium',
+    });
+    const restoredLayout = restored.segments[1];
+    if (!restoredLayout || restoredLayout.kind !== 'layout') throw new Error('layout missing');
+    expect(restoredLayout.engagement).toEqual({
+      cognitive: 'medium',
+      behavioral: 'medium',
+      affective: 'medium',
+    });
+    expect(restoredLayout.canvas.nodes[0]?.engagement).toBeNull();
+  });
+
   it('writes the schema version', () => {
     const parsed = JSON.parse(serializeLesson(createLesson())) as { schemaVersion: number };
     expect(parsed.schemaVersion).toBe(SCHEMA_VERSION);

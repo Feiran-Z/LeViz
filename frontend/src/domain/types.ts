@@ -22,6 +22,19 @@ export type NodeType =
   | 'teacher'
   | 'chair';
 
+/** How much of a kind of engagement the planner designed into a segment. */
+export type EngagementLevel = 'low' | 'medium' | 'high';
+
+/** The three kinds of engagement a planner designs for. */
+export type EngagementDimension = 'cognitive' | 'behavioral' | 'affective';
+
+/** Designed engagement for an activity or a single station. */
+export interface EngagementDesign {
+  cognitive: EngagementLevel;
+  behavioral: EngagementLevel;
+  affective: EngagementLevel;
+}
+
 /** Plain-text annotation attached to a canvas node. Never rich text. */
 export interface NodeNote {
   title: string;
@@ -40,6 +53,11 @@ export interface CanvasNode {
   label: string;
   /** How many students may be assigned. 0 means the node is not a seat. */
   capacity: number;
+  /**
+   * Station-specific engagement design. `null` means the station follows the
+   * layout segment's activity-wide design.
+   */
+  engagement: EngagementDesign | null;
   note: NodeNote | null;
   assignedStudentIds: string[];
 }
@@ -70,6 +88,8 @@ export interface TextSegment {
   kind: 'text';
   title: string;
   durationMin: number;
+  /** Activity-wide designed engagement for this segment. */
+  engagement: EngagementDesign;
   /** TipTap JSON only ever lives here (architecture invariant 7). */
   content: RichTextDoc | null;
 }
@@ -82,6 +102,8 @@ export interface LayoutSegment {
   activityType: ActivityType;
   /** General instructions for the activity as a whole. Plain text. */
   instructions: string;
+  /** Activity-wide designed engagement; stations may override it. */
+  engagement: EngagementDesign;
   canvas: CanvasState;
 }
 

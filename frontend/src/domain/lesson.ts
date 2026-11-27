@@ -11,6 +11,7 @@ import {
   type Student,
   type TextSegment,
 } from './types';
+import { createEngagement } from './engagement';
 
 export const DEFAULT_CANVAS_WIDTH = 1000;
 export const DEFAULT_CANVAS_HEIGHT = 700;
@@ -66,6 +67,7 @@ export function createCanvasNode(
     rotation: 0,
     label: info.label,
     capacity: info.capacity,
+    engagement: null,
     note: null,
     assignedStudentIds: [],
     ...overrides,
@@ -82,6 +84,7 @@ export function createTextSegment(
     kind: 'text',
     title,
     durationMin,
+    engagement: createEngagement(),
     content: content ? structuredClone(content) : emptyRichTextDoc(),
   };
 }
@@ -94,6 +97,7 @@ export function createLayoutSegment(activityType: ActivityType = 'custom'): Layo
     durationMin: 15,
     activityType,
     instructions: '',
+    engagement: createEngagement(),
     canvas: {
       width: DEFAULT_CANVAS_WIDTH,
       height: DEFAULT_CANVAS_HEIGHT,

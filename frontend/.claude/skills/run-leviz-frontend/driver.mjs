@@ -96,6 +96,37 @@ function stamp() {
   return new Date().toISOString().replace(/[:.]/g, '-');
 }
 
+/**
+ * Map a point in canvas world units (1000×700) to the screen. The editor fits
+ * the canvas into the surface, so hard-coded screen pixels break whenever the
+ * chrome above the canvas changes height.
+ */
+async function canvasPoint(page, x, y) {
+  const map = await page.evaluate(() => {
+    const surface = document.querySelector('[data-canvas-surface="true"]');
+    if (!surface) return null;
+    const rect = surface.getBoundingClientRect();
+    const PADDING = 28;
+    const canvasWidth = 1000;
+    const canvasHeight = 700;
+    const fit = Math.min(
+      (rect.width - PADDING * 2) / canvasWidth,
+      (rect.height - PADDING * 2) / canvasHeight,
+      1.5,
+    );
+    const scale = Math.max(0.15, fit);
+    return {
+      left: rect.left,
+      top: rect.top,
+      scale,
+      offsetX: (rect.width - canvasWidth * scale) / 2,
+      offsetY: (rect.height - canvasHeight * scale) / 2,
+    };
+  });
+  if (!map) throw new Error('canvas surface not found');
+  return { x: map.left + map.offsetX + x * map.scale, y: map.top + map.offsetY + y * map.scale };
+}
+
 async function runLoadFlow(page, opts, shoot) {
   await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
   await page.waitForTimeout(750);
@@ -155,7 +186,8 @@ async function runLessonFlow(page, opts, shoot, checks) {
   check('roster avatar is visible', Boolean(avatarBox));
   if (avatarBox) {
     const start = { x: avatarBox.x + avatarBox.width / 2, y: avatarBox.y + avatarBox.height / 2 };
-    const target = { x: 842, y: 614 };
+    // Seat 5 of the 12-seat Harkness circle, in canvas world units.
+    const target = await canvasPoint(page, 673, 410);
     await page.mouse.move(start.x, start.y);
     await page.mouse.down();
     for (let i = 1; i <= 12; i += 1) {
@@ -171,8 +203,11 @@ async function runLessonFlow(page, opts, shoot, checks) {
   await shoot('03-student-dropped');
   check('student assigned via drag', (await page.locator('body').innerText()).includes('Ada Lovelace → Seat 5'));
 
+  // Same canvas-chrome height for every later interaction with Seat 1.
+  const seat1 = await canvasPoint(page, 500, 110);
+
   // Double-click Seat 1 to annotate it.
-  await page.mouse.dblclick(700, 367);
+  await page.mouse.dblclick(seat1.x, seat1.y);
   await page.waitForTimeout(500);
   const dialogOpen = (await page.getByRole('dialog').count()) > 0;
   check('double-click opens the note dialog', dialogOpen);
@@ -185,7 +220,7 @@ async function runLessonFlow(page, opts, shoot, checks) {
   await shoot('04-node-note');
 
   // Hovering a noted seat previews its note at the cursor.
-  await page.mouse.move(700, 367);
+  await page.mouse.move(seat1.x, seat1.y);
   await page.waitForTimeout(500);
   const tooltip = page.getByRole('tooltip');
   check(
@@ -201,9 +236,9 @@ async function runLessonFlow(page, opts, shoot, checks) {
   const inspectorText = async () => page.locator('aside').last().innerText().catch(() => '');
   const positionOf = (text) => text.match(/Position\s+(-?\d+),\s*(-?\d+)/)?.[0] ?? '';
   const positionBefore = positionOf(await inspectorText());
-  await page.mouse.move(700, 367);
+  await page.mouse.move(seat1.x, seat1.y);
   await page.mouse.down();
-  await page.mouse.move(745, 367, { steps: 8 });
+  await page.mouse.move(seat1.x + 45, seat1.y, { steps: 8 });
   await page.mouse.up();
   await page.waitForTimeout(400);
   await shoot('05-node-dragged');
@@ -223,7 +258,7 @@ async function runLessonFlow(page, opts, shoot, checks) {
 
   // The preview must survive canvas interaction and tab switches.
   const previewVisible = async () => (await page.locator('aside').last().innerText()).includes('Group 1');
-  await page.mouse.click(700, 367);
+  await page.mouse.click(seat1.x, seat1.y);
   await page.waitForTimeout(300);
   const groupsTabActive =
     (await page.getByRole('tab', { name: 'Groups' }).getAttribute('aria-selected')) === 'true';
@@ -308,6 +343,10 @@ async function runLessonFlow(page, opts, shoot, checks) {
     ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson'].every((name) =>
       overviewText.includes(name),
     ),
+  );
+  check(
+    'overview plots the engagement timeline',
+    (await page.locator('svg[role="img"][aria-label^="Designed engagement timeline"]').count()) === 1,
   );
   await shoot('13-overview');
   await page.getByRole('button', { name: 'Back to editor' }).click();

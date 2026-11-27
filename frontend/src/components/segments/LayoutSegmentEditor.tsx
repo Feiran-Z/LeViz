@@ -5,6 +5,7 @@ import { CanvasEditor } from '../../canvas/CanvasEditor';
 import { NoteDialog } from '../../canvas/NoteDialog';
 import { useLessonStore } from '../../stores/lessonStore';
 import { Icon } from '../ui/Icons';
+import { EngagementBar } from '../engagement/EngagementBar';
 import { SegmentHeader } from './SegmentHeader';
 
 export function LayoutSegmentEditor({ segment }: { segment: LayoutSegment }) {
@@ -54,6 +55,7 @@ export function LayoutSegmentEditor({ segment }: { segment: LayoutSegment }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <SegmentHeader segment={segment} />
+      <EngagementBar segment={segment} />
 
       <div className="flex flex-wrap items-center gap-2 border-b border-default bg-page px-4 py-1.5">
         <label className="flex items-center gap-1.5 text-xs text-secondary" htmlFor="activity-type">
