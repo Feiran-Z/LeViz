@@ -36,7 +36,8 @@ export type TeachTimerAction =
   | { type: 'previous' }
   | { type: 'nextStop'; now: number }
   | { type: 'setRotation'; enabled: boolean }
-  | { type: 'setSound'; enabled: boolean };
+  | { type: 'setSound'; enabled: boolean }
+  | { type: 'restart' };
 
 function plannedMs(segment: TeachSegment): number {
   return segment.durationMin * 60_000;
@@ -211,6 +212,9 @@ export function reduceTeachTimer(
 
     case 'setSound':
       return { ...state, soundOn: action.enabled };
+
+    case 'restart':
+      return createTeachTimerState(run, { soundOn: state.soundOn });
 
     default:
       return state;

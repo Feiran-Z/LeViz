@@ -50,7 +50,14 @@ export function TeachTimer({
           </p>
           <h1 className="mt-1 truncate text-xl font-semibold tracking-[-0.02em]">{title}</h1>
         </div>
-        <span className={`tag ${completed || finalSeconds ? 'text-warning' : ''}`}>{stateLabel}</span>
+        <span
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className={`tag ${completed || finalSeconds ? 'text-warning' : ''}`}
+        >
+          {stateLabel}
+        </span>
       </div>
 
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4">

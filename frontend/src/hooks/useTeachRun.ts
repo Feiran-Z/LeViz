@@ -30,6 +30,7 @@ export interface TeachRunActions {
   next: () => void;
   previous: () => void;
   nextStop: () => void;
+  restart: () => void;
   setRotation: (enabled: boolean) => void;
   setSound: (enabled: boolean) => void;
   clearSession: () => void;
@@ -235,6 +236,7 @@ export function useTeachRun({
       next: () => dispatch({ type: 'next' }),
       previous: () => dispatch({ type: 'previous' }),
       nextStop: () => dispatch({ type: 'nextStop', now: Date.now() }),
+      restart: () => dispatch({ type: 'restart' }),
       setRotation: (enabled) => dispatch({ type: 'setRotation', enabled }),
       setSound: (enabled) => {
         if (enabled) primeChime();

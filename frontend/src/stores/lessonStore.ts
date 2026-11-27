@@ -239,7 +239,7 @@ export const useLessonStore = create<LessonState>()(
           mutateDetached((lesson) => ({
             ...lesson,
             classId: classRoster.id,
-            ...(options.setClassSize ? { classSize: classRoster.students.length } : {}),
+            ...(options.setClassSize ? { classSize: clampClassSize(classRoster.students.length) } : {}),
             segments: pruneAssignmentsToRoster(lesson.segments, rosterIds),
           }));
         },

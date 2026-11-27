@@ -10,8 +10,7 @@ function cardNodes(segment: LayoutSegment): CanvasNode[] {
       const stationLike =
         node.type === 'station' ||
         node.type === 'round-table' ||
-        node.type === 'wall-anchor' ||
-        node.type === 'podium';
+        ((node.type === 'wall-anchor' || node.type === 'podium') && (hasNote || hasGroup));
       return hasNote || hasGroup || stationLike;
     })
     .sort((a, b) => a.y - b.y || a.x - b.x);
@@ -82,9 +81,11 @@ export function TeachLayout({
                     Group: {names.join(', ')}
                   </p>
                 ) : null}
-                <p className="mt-1 text-[10px] tabular text-secondary">
-                  {node.capacity > 0 ? `${names.length}/${node.capacity} seats` : 'Not a seat'}
-                </p>
+                {node.capacity > 0 ? (
+                  <p className="mt-1 text-[10px] tabular text-secondary">
+                    {names.length}/{node.capacity} seats
+                  </p>
+                ) : null}
               </li>
             );
           })}

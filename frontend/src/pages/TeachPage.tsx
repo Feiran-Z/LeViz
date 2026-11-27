@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { buildTeachRun } from '../domain/teach';
 import type { Lesson, Student } from '../domain/types';
@@ -9,6 +9,7 @@ import { useRosterStore } from '../stores/rosterStore';
 import { RotationGuide } from '../components/teach/RotationGuide';
 import { TeachContent } from '../components/teach/TeachContent';
 import { TeachTimer } from '../components/teach/TeachTimer';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Icon } from '../components/ui/Icons';
 
 export function TeachPage() {
@@ -87,6 +88,15 @@ function TeachRunner({
   const run = useMemo(() => buildTeachRun(lesson.segments), [lesson.segments]);
   const teach = useTeachRun({ lessonId, run });
   const { state, segment, actions } = teach;
+  const [restartOpen, setRestartOpen] = useState(false);
+  const [, setClockTick] = useState(0);
+
+  // The planned-end estimate uses the wall clock, so it must advance while the
+  // run is paused too. One-second renders keep the minute label current.
+  useEffect(() => {
+    const id = window.setInterval(() => setClockTick((value) => value + 1), 1_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   useEffect(() => {
     document.title = `Teach · ${lesson.title} · LeViz`;
@@ -99,6 +109,7 @@ function TeachRunner({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (restartOpen) return;
       const target = event.target;
       if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable="true"]')) {
         return;
@@ -122,7 +133,7 @@ function TeachRunner({
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [actions, exit]);
+  }, [actions, exit, restartOpen]);
 
   if (!segment) {
     return (
@@ -165,6 +176,14 @@ function TeachRunner({
         </div>
         <span className="text-[11px] text-secondary">{students.length} on roster</span>
         <span className="text-[11px] tabular text-secondary">Planned end ~{plannedEnd}</span>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={() => setRestartOpen(true)}
+        >
+          <Icon name="refresh" size={14} />
+          Start over
+        </button>
         <button
           type="button"
           className="icon-btn"
@@ -215,8 +234,23 @@ function TeachRunner({
           <p className="text-xs text-secondary">
             {next ? `Next: ${next.segment.title} · ${next.durationMin} min` : 'Last segment'}
           </p>
+          <p className="text-[11px] text-secondary">
+            Space start/pause · ←/→ previous/next · R reset · Esc exit
+          </p>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={restartOpen}
+        title="Start this lesson over?"
+        message="The timer returns to the first timed segment. The lesson itself is not changed."
+        confirmLabel="Start over"
+        onConfirm={() => {
+          setRestartOpen(false);
+          actions.restart();
+        }}
+        onCancel={() => setRestartOpen(false)}
+      />
     </div>
   );
 }

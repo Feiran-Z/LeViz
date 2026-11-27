@@ -15,15 +15,15 @@ below are relative to `LeViz/frontend/`.
 Every command below was executed against Phase 1 of the implementation plan on this
 machine. Evidence from that run:
 
-- `npm test` → **19 files, 144 tests passed**, including the class-repository contract,
-  the IndexedDB v1 → v2 migration, and the teach timer/close tests.
+- `npm test` → **19 files, 146 tests passed**, including the class-repository contract,
+  the IndexedDB v1 → v2 migration, and the teach timer/close/restart tests.
 - `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.15 MB
   (358 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 32 checks
   passed**, zero console errors, zero page errors, 16 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow classes` → **all 14 checks
   passed**, zero console errors, zero page errors, 4 non-blank screenshots.
-- `node .claude/skills/run-leviz-frontend/driver.mjs --flow teach` → **all 26 checks
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow teach` → **all 31 checks
   passed**, zero console errors, zero page errors, 5 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
@@ -45,8 +45,9 @@ and shows the class as unavailable.
 The `teach` flow builds a text segment, a station-rotation layout with groups, and a
 gallery-walk layout with a stop prompt, then opens teach mode from the lesson card. It
 checks the text timer, start/pause/reset/+1, time-up without auto-advance, next/previous,
-a reload restoring paused, station and gallery rotation guides, the guide toggle, and
-the editor/overview Teach entries.
+a reload restoring paused (text and station), station and gallery rotation guides, the
+guide toggle, the planned-end tick, a11y state, Start over, and the editor/overview Teach
+entries.
 
 ## Prerequisites
 

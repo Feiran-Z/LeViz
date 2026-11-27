@@ -251,6 +251,14 @@ describe('lessonStore.save', () => {
     expect(useLessonStore.temporal.getState().pastStates.length).toBe(undoDepth);
   });
 
+  it('clamps an oversized class roster when applying a class', () => {
+    const roster = createClassRoster('Huge class', classOf(201));
+
+    useLessonStore.getState().applyClassRoster(roster, { setClassSize: true });
+
+    expect(useLessonStore.getState().lesson?.classSize).toBe(200);
+  });
+
   it('links and unlinks a class without adding undo history', () => {
     const undoDepth = useLessonStore.temporal.getState().pastStates.length;
     useLessonStore.getState().linkClass('class_1');

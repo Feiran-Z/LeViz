@@ -673,9 +673,20 @@ async function runTeachFlow(page, opts, shoot, checks) {
   check('teach route opens', /\/teach/.test(page.url()), page.url());
   check('text segment timer starts at one minute', (await timerText()).includes('01:00'), await timerText());
   check('text content is rendered', (await page.locator('body').innerText()).includes('Students begin immediately'));
+  const teachText = await page.locator('body').innerText();
+  check('keyboard shortcuts are visible', teachText.includes('Space start/pause'));
+  check(
+    'timer state is announced',
+    (await page.locator('[role="status"][aria-live="polite"]').filter({ hasText: 'Paused' }).count()) >= 1,
+  );
+  const plannedBefore = await page.getByText(/Planned end ~/).first().innerText();
+  await page.clock.fastForward(60_000);
+  await page.waitForTimeout(300);
+  const plannedAfter = await page.getByText(/Planned end ~/).first().innerText();
+  check('planned end advances while paused', plannedBefore !== plannedAfter, `${plannedBefore} -> ${plannedAfter}`);
   await shoot('01-text-timer');
 
-  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.clock.fastForward(10_000);
   await page.waitForTimeout(200);
   check('timer counts down', (await timerText()).includes('00:50'), await timerText());
@@ -693,7 +704,7 @@ async function runTeachFlow(page, opts, shoot, checks) {
   await page.waitForTimeout(150);
   check('reset restores the planned duration', (await timerText()).includes('01:00'), await timerText());
 
-  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.clock.fastForward(61_000);
   await page.waitForTimeout(200);
   check('time-up pauses at zero', (await timerText()).includes('00:00') && (await page.locator('body').innerText()).includes("Time's up"), await timerText());
@@ -707,7 +718,7 @@ async function runTeachFlow(page, opts, shoot, checks) {
   await page.waitForTimeout(200);
   check('previous returns to the do now', (await page.locator('body').innerText()).includes('Do Now'));
 
-  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.clock.fastForward(10_000);
   await page.waitForTimeout(150);
   const beforeReload = await timerText();
@@ -743,7 +754,7 @@ async function runTeachFlow(page, opts, shoot, checks) {
   await page.getByRole('button', { name: 'Rotation guide' }).click();
   await page.waitForTimeout(200);
   check('rotation guide can be turned back on', (await page.locator('body').innerText()).includes('Station 1 of 4'));
-  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
   await page.clock.fastForward(10_000);
   await page.waitForTimeout(150);
   await page.reload({ waitUntil: 'load' });
@@ -766,10 +777,20 @@ async function runTeachFlow(page, opts, shoot, checks) {
     galleryBody.includes('Stop 1 of 6') && galleryBody.includes('Stop A prompt'),
     galleryBody,
   );
+  check('unannotated gallery stops do not render empty cards', !galleryBody.includes('Not a seat'));
   await page.getByRole('button', { name: 'Next stop' }).click();
   await page.waitForTimeout(200);
   check('next stop advances the gallery guide', (await page.locator('body').innerText()).includes('Stop 2 of 6'));
   await shoot('05-gallery-walk');
+
+  await page.getByRole('button', { name: 'Start over' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Start over' }).click();
+  await page.waitForTimeout(300);
+  check(
+    'start over returns to the first segment',
+    (await timerText()).includes('01:00') && (await page.locator('body').innerText()).includes('Do Now'),
+    await timerText(),
+  );
 
   await page.getByRole('button', { name: /Exit/ }).click();
   await page.waitForURL(/\/lessons\/[^/]+$/);

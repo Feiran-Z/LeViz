@@ -164,6 +164,26 @@ describe('teach timer', () => {
     expect(liveDurationMs(state, run)).toBe(660_000);
   });
 
+  it('restarts the whole run from the first segment', () => {
+    const run = textRun([1, 2]);
+    let state = createTeachTimerState(run, { soundOn: true });
+    state = reduceTeachTimer(state, { type: 'next' }, run);
+    state = reduceTeachTimer(state, { type: 'add', ms: 60_000 }, run);
+
+    state = reduceTeachTimer(state, { type: 'restart' }, run);
+
+    expect(state).toMatchObject({
+      segmentIndex: 0,
+      remainingMs: 60_000,
+      addedMs: 0,
+      running: false,
+      completed: false,
+      stopIndex: 0,
+      rotationEnabled: false,
+      soundOn: true,
+    });
+  });
+
   it('reports sound preference', () => {
     expect(createTeachTimerState(textRun([1]), { soundOn: true }).soundOn).toBe(true);
     expect(reduceTeachTimer(createTeachTimerState(textRun([1])), { type: 'setSound', enabled: true }, textRun([1])).soundOn).toBe(true);
