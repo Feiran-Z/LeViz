@@ -1,6 +1,7 @@
 import {
   ENGAGEMENT_DIMENSIONS,
   ENGAGEMENT_DIMENSION_LABELS,
+  changeEngagementLevel,
   resolveSegmentEngagement,
 } from '../../domain/engagement';
 import type { Segment } from '../../domain/types';
@@ -39,11 +40,10 @@ export function EngagementBar({ segment }: { segment: Segment }) {
             <EngagementLevelSegmented
               label={ENGAGEMENT_DIMENSION_LABELS[dimension]}
               value={design[dimension]}
-              onChange={(level) =>
-                updateSegment(segment.id, {
-                  engagement: { ...design, [dimension]: level },
-                })
-              }
+              onChange={(level) => {
+                const next = changeEngagementLevel(design, dimension, level);
+                if (next) updateSegment(segment.id, { engagement: next });
+              }}
             />
           </div>
         ))}

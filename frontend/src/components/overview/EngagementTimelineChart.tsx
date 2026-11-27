@@ -6,6 +6,7 @@ import {
 } from '../../domain/engagement';
 import { buildEngagementTimeline } from '../../domain/engagementTimeline';
 import type { EngagementDimension, EngagementLevel, Segment } from '../../domain/types';
+import { axisTicks, formatTick } from './timelineAxis';
 
 /**
  * Designed-engagement timeline for the read-only overview. Three stepped lines
@@ -46,33 +47,6 @@ const SERIES_DODGE: Record<EngagementDimension, number> = {
   behavioral: 0,
   affective: 5,
 };
-
-function axisTicks(totalMin: number): number[] {
-  const step =
-    totalMin <= 8
-      ? 1
-      : totalMin <= 16
-        ? 2
-        : totalMin <= 30
-          ? 5
-          : totalMin <= 60
-            ? 10
-            : totalMin <= 120
-              ? 15
-              : totalMin <= 180
-                ? 30
-                : totalMin <= 300
-                  ? 45
-                  : 60;
-  const ticks: number[] = [];
-  for (let tick = 0; tick < totalMin; tick += step) ticks.push(tick);
-  ticks.push(totalMin);
-  return ticks;
-}
-
-function formatTick(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
-}
 
 function shortTitle(title: string, max = 26): string {
   const clean = title.trim() || 'Untitled segment';

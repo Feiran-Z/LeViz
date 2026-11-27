@@ -61,7 +61,38 @@ export function normalizeEngagement(value: unknown): EngagementDesign {
 
 /** Coerce a station override; anything but a complete design means "inherit". */
 export function normalizeNodeEngagement(value: unknown): EngagementDesign | null {
-  return value === null || value === undefined ? null : normalizeEngagement(value);
+  if (typeof value !== 'object' || value === null) return null;
+  const record = value as Record<string, unknown>;
+  if (!isLevel(record['cognitive']) || !isLevel(record['behavioral']) || !isLevel(record['affective'])) {
+    return null;
+  }
+  return {
+    cognitive: record['cognitive'],
+    behavioral: record['behavioral'],
+    affective: record['affective'],
+  };
+}
+
+/** True when two designs ask for the same level on every dimension. */
+export function engagementsEqual(a: EngagementDesign, b: EngagementDesign): boolean {
+  return (
+    a.cognitive === b.cognitive && a.behavioral === b.behavioral && a.affective === b.affective
+  );
+}
+
+/**
+ * Return the design with one dimension changed, or `null` when the requested
+ * level is already set. Callers use the null to skip writes, so clicking an
+ * already-selected level does not create an undo entry — and, on an inheriting
+ * station, does not silently turn it into a station-specific override.
+ */
+export function changeEngagementLevel(
+  design: EngagementDesign,
+  dimension: EngagementDimension,
+  level: EngagementLevel,
+): EngagementDesign | null {
+  if (design[dimension] === level) return null;
+  return { ...design, [dimension]: level };
 }
 
 /** The activity-wide design for any segment, including pre-feature documents. */

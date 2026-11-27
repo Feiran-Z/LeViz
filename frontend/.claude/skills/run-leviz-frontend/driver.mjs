@@ -97,9 +97,24 @@ function stamp() {
 }
 
 /**
+ * Reset the canvas to fit-to-view (zoom 1, no pan). `canvasPoint` models only
+ * that transform, so call this before mapping a point — otherwise a wheel zoom
+ * or a panning drag leaves the computed screen position wrong.
+ */
+async function resetCanvasView(page) {
+  const fit = page.getByRole('button', { name: 'Fit to view' });
+  if ((await fit.count()) > 0) {
+    await fit.click();
+    await page.waitForTimeout(120);
+  }
+}
+
+/**
  * Map a point in canvas world units (1000×700) to the screen. The editor fits
  * the canvas into the surface, so hard-coded screen pixels break whenever the
- * chrome above the canvas changes height.
+ * chrome above the canvas changes height. Assumes fit-to-view: call
+ * `resetCanvasView` first, and recompute the point before each interaction
+ * rather than caching it.
  */
 async function canvasPoint(page, x, y) {
   const map = await page.evaluate(() => {
@@ -187,6 +202,7 @@ async function runLessonFlow(page, opts, shoot, checks) {
   if (avatarBox) {
     const start = { x: avatarBox.x + avatarBox.width / 2, y: avatarBox.y + avatarBox.height / 2 };
     // Seat 5 of the 12-seat Harkness circle, in canvas world units.
+    await resetCanvasView(page);
     const target = await canvasPoint(page, 673, 410);
     await page.mouse.move(start.x, start.y);
     await page.mouse.down();
@@ -203,8 +219,13 @@ async function runLessonFlow(page, opts, shoot, checks) {
   await shoot('03-student-dropped');
   check('student assigned via drag', (await page.locator('body').innerText()).includes('Ada Lovelace → Seat 5'));
 
-  // Same canvas-chrome height for every later interaction with Seat 1.
-  const seat1 = await canvasPoint(page, 500, 110);
+  // Recompute Seat 1 before every interaction: the viewport can move, and a
+  // cached screen point would silently miss the node.
+  const seat1Point = async () => {
+    await resetCanvasView(page);
+    return canvasPoint(page, 500, 110);
+  };
+  let seat1 = await seat1Point();
 
   // Double-click Seat 1 to annotate it.
   await page.mouse.dblclick(seat1.x, seat1.y);
@@ -220,6 +241,7 @@ async function runLessonFlow(page, opts, shoot, checks) {
   await shoot('04-node-note');
 
   // Hovering a noted seat previews its note at the cursor.
+  seat1 = await seat1Point();
   await page.mouse.move(seat1.x, seat1.y);
   await page.waitForTimeout(500);
   const tooltip = page.getByRole('tooltip');
@@ -236,6 +258,7 @@ async function runLessonFlow(page, opts, shoot, checks) {
   const inspectorText = async () => page.locator('aside').last().innerText().catch(() => '');
   const positionOf = (text) => text.match(/Position\s+(-?\d+),\s*(-?\d+)/)?.[0] ?? '';
   const positionBefore = positionOf(await inspectorText());
+  seat1 = await seat1Point();
   await page.mouse.move(seat1.x, seat1.y);
   await page.mouse.down();
   await page.mouse.move(seat1.x + 45, seat1.y, { steps: 8 });
@@ -258,6 +281,7 @@ async function runLessonFlow(page, opts, shoot, checks) {
 
   // The preview must survive canvas interaction and tab switches.
   const previewVisible = async () => (await page.locator('aside').last().innerText()).includes('Group 1');
+  seat1 = await seat1Point();
   await page.mouse.click(seat1.x, seat1.y);
   await page.waitForTimeout(300);
   const groupsTabActive =

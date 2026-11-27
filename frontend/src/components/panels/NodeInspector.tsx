@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { LayoutSegment } from '../../domain/types';
-import { NODE_TYPE_INFO } from '../../domain/types';
+import { NODE_TYPE_INFO, isAssignableNode } from '../../domain/types';
 import { useLessonStore } from '../../stores/lessonStore';
 import { useRosterStore } from '../../stores/rosterStore';
 import { useUiStore } from '../../stores/uiStore';
@@ -152,7 +152,7 @@ export function NodeInspector({ segment }: { segment: LayoutSegment | null }) {
         </div>
       </div>
 
-      <NodeEngagementSection segment={segment} node={node} />
+      {isAssignableNode(node) ? <NodeEngagementSection segment={segment} node={node} /> : null}
 
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between">

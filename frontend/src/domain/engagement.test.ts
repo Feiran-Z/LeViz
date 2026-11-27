@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { createCanvasNode, createLayoutSegment, createLesson, createTextSegment } from './lesson';
 import {
   DEFAULT_ENGAGEMENT,
+  changeEngagementLevel,
   createEngagement,
+  engagementsEqual,
   normalizeEngagement,
   normalizeLessonEngagement,
+  normalizeNodeEngagement,
   resolveNodeEngagement,
   resolveSegmentEngagement,
 } from './engagement';
@@ -20,6 +23,41 @@ describe('createEngagement', () => {
       behavioral: 'medium',
       affective: 'high',
     });
+  });
+});
+
+describe('changeEngagementLevel', () => {
+  it('returns null when the requested level is already set', () => {
+    expect(changeEngagementLevel(DEFAULT_ENGAGEMENT, 'cognitive', 'medium')).toBeNull();
+  });
+
+  it('returns a new design with only that dimension changed', () => {
+    expect(changeEngagementLevel(DEFAULT_ENGAGEMENT, 'affective', 'high')).toEqual({
+      cognitive: 'medium',
+      behavioral: 'medium',
+      affective: 'high',
+    });
+  });
+});
+
+describe('engagementsEqual', () => {
+  it('compares every dimension', () => {
+    expect(engagementsEqual(DEFAULT_ENGAGEMENT, createEngagement())).toBe(true);
+    expect(engagementsEqual(DEFAULT_ENGAGEMENT, createEngagement({ affective: 'high' }))).toBe(false);
+  });
+});
+
+describe('normalizeNodeEngagement', () => {
+  it('treats a malformed override as inherit', () => {
+    expect(normalizeNodeEngagement({})).toBeNull();
+    expect(normalizeNodeEngagement({ cognitive: 'high' })).toBeNull();
+    expect(normalizeNodeEngagement('high')).toBeNull();
+  });
+
+  it('keeps a complete override', () => {
+    expect(
+      normalizeNodeEngagement({ cognitive: 'high', behavioral: 'low', affective: 'medium' }),
+    ).toEqual({ cognitive: 'high', behavioral: 'low', affective: 'medium' });
   });
 });
 

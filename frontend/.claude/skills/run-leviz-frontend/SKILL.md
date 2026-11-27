@@ -15,9 +15,9 @@ below are relative to `LeViz/frontend/`.
 Every command below was executed against Phase 1 of the implementation plan on this
 machine. Evidence from that run:
 
-- `npm test` → **10 files, 85 tests passed** (grouping 15, serialization 9, geometry 13,
+- `npm test` → **11 files, 93 tests passed** (grouping 15, serialization 9, geometry 13,
   repository contract 5, lesson-store 10, layout templates 7, text templates 5,
-  activity guidelines 3, designed engagement 11, engagement timeline 7).
+  activity guidelines 3, designed engagement 16, engagement timeline 7, timeline axis 3).
 - `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.15 MB
   (358 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 25 checks
@@ -127,9 +127,11 @@ fired. **Open the screenshots** — a blank PNG is a failure even when exit code
   original 12-chair coordinates. Other class sizes shift the chair layout.
 - The driver maps canvas world units to the screen at run time via
   `canvasPoint(page, x, y)`, using the `[data-canvas-surface]` rect and the stage fit
-  (1000×700 canvas, 28px padding). Seat 1 is `(500, 110)` and Seat 5 is `(673, 410)`
-  in world units. If the template layout or canvas size changes, update those world
-  coordinates; chrome height changes no longer require driver edits.
+  (1000×700 canvas, 28px padding). It clicks **Fit to view** before each mapping so
+  zoom/pan can never skew the target, and recomputes the point before every
+  interaction. Seat 1 is `(500, 110)` and Seat 5 is `(673, 410)` in world units. If
+  the template layout or canvas size changes, update those world coordinates; chrome
+  height changes no longer require driver edits.
 - Some checks read toast/message text (e.g. `Ada Lovelace → Seat 5`). Toast copy
   changes belong in the driver too.
 - Each run uses a fresh browser context, so IndexedDB starts empty and the run does

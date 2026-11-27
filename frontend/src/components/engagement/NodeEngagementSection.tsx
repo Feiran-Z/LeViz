@@ -1,11 +1,19 @@
 import {
   ENGAGEMENT_DIMENSIONS,
   ENGAGEMENT_DIMENSION_LABELS,
+  changeEngagementLevel,
+  engagementsEqual,
   nodeOverridesEngagement,
   resolveNodeEngagement,
   resolveSegmentEngagement,
 } from '../../domain/engagement';
-import type { CanvasNode, EngagementDimension, EngagementLevel, LayoutSegment } from '../../domain/types';
+import {
+  isAssignableNode,
+  type CanvasNode,
+  type EngagementDimension,
+  type EngagementLevel,
+  type LayoutSegment,
+} from '../../domain/types';
 import { useLessonStore } from '../../stores/lessonStore';
 import { EngagementLevelSegmented } from './EngagementLevelSegmented';
 
@@ -26,10 +34,18 @@ export function NodeEngagementSection({
   const overridden = nodeOverridesEngagement(node);
   const design = resolveNodeEngagement(segment, node);
 
+  if (!isAssignableNode(node)) return null;
+
   const setLevel = (dimension: EngagementDimension, level: EngagementLevel) => {
-    // The first adjustment copies the activity design, so the station starts
-    // from the activity's levels rather than from a blank slate.
-    updateNode(segment.id, node.id, { engagement: { ...design, [dimension]: level } });
+    // Clicking the level already shown is a no-op — it must not turn an
+    // inheriting station into a station-specific one.
+    const next = changeEngagementLevel(design, dimension, level);
+    if (!next) return;
+    // Adjusting every dimension back to the activity's values restores inherit,
+    // instead of leaving a station-specific copy of the activity design.
+    updateNode(segment.id, node.id, {
+      engagement: engagementsEqual(next, activity) ? null : next,
+    });
   };
 
   return (

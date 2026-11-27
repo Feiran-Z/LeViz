@@ -3,7 +3,7 @@ import {
   resolveNodeEngagement,
   resolveSegmentEngagement,
 } from '../../domain/engagement';
-import { ACTIVITY_LABELS, type LayoutSegment } from '../../domain/types';
+import { ACTIVITY_LABELS, isAssignableNode, type LayoutSegment } from '../../domain/types';
 import { EngagementSummary } from '../engagement/EngagementSummary';
 import { formatMinutes, formatShortDate } from '../../lib/format';
 import { lessonTotalMinutes, useLessonStore } from '../../stores/lessonStore';
@@ -27,8 +27,10 @@ function LayoutSection({ segment }: { segment: LayoutSegment }) {
   const annotated = nodes.filter(
     (node) => node.note && (node.note.title.trim() || node.note.body.trim()),
   );
+  // Only seats/stations hold students; a stray override on the teacher or a
+  // wall anchor must never print as "Station engagement".
   const adjustedStations = nodes
-    .filter(nodeOverridesEngagement)
+    .filter((node) => isAssignableNode(node) && nodeOverridesEngagement(node))
     .sort((a, b) => a.y - b.y || a.x - b.x);
   const studentName = (id: string) => students.find((student) => student.id === id)?.name ?? 'Unknown';
 
