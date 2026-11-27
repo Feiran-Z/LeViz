@@ -59,8 +59,8 @@ function parseArgs(argv) {
       process.exit(2);
     }
   }
-  if (!['load', 'lesson'].includes(opts.flow)) {
-    console.error(`--flow must be "load" or "lesson"`);
+  if (!['load', 'lesson', 'classes'].includes(opts.flow)) {
+    console.error(`--flow must be "load", "lesson", or "classes"`);
     process.exit(2);
   }
   if (!Number.isFinite(opts.timeout) || opts.timeout <= 0) {
@@ -418,6 +418,85 @@ async function runLessonFlow(page, opts, shoot, checks) {
   await shoot('14-dark-theme');
 }
 
+async function runClassesFlow(page, opts, shoot, checks) {
+  const check = (name, condition, detail) => {
+    checks.push({ name, ok: Boolean(condition), ...(detail ? { detail } : {}) });
+    if (!condition) throw new Error(`Check failed: ${name}${detail ? ` (${detail})` : ''}`);
+  };
+
+  await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
+  await page.getByRole('button', { name: 'New lesson' }).first().click();
+  await page.waitForURL(/\/lessons\//);
+  await page.waitForTimeout(700);
+
+  for (const name of ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson']) {
+    const input = page.getByLabel('Add a student by name');
+    await input.fill(name);
+    await input.press('Enter');
+    await page.waitForTimeout(100);
+  }
+
+  // Tags and constraints travel with the class.
+  await page.getByRole('button', { name: /^Ada Lovelace/ }).click();
+  const tagInput = page.getByPlaceholder('Add tag');
+  await tagInput.fill('reader');
+  await tagInput.press('Enter');
+  await page.getByLabel('Pair Ada Lovelace with another student').selectOption({ label: 'Grace Hopper' });
+  await page.waitForTimeout(300);
+
+  await page.getByRole('button', { name: /Save as class/ }).click();
+  await page.getByLabel('Class name').fill('Period 3');
+  await page.getByRole('button', { name: 'Save class' }).click();
+  await page.waitForTimeout(600);
+  let right = page.locator('aside').last();
+  check('class is saved and linked', (await right.innerText()).includes('Period 3'), await right.innerText());
+  await shoot('01-class-saved');
+
+  // Use the class in a new lesson.
+  await page.getByRole('link', { name: 'Back to all lessons' }).click();
+  await page.getByRole('button', { name: 'New lesson' }).first().waitFor({ timeout: 10000 });
+  await page.getByRole('button', { name: 'New lesson' }).first().click();
+  await page.waitForURL(/\/lessons\//);
+  await page.waitForTimeout(600);
+  await page.getByRole('tab', { name: 'Roster' }).click();
+  await page.getByLabel('Choose a class').selectOption({ index: 1 });
+  await page.getByRole('button', { name: 'Use class' }).click();
+  await page.waitForTimeout(600);
+  right = page.locator('aside').last();
+  const applied = await right.innerText();
+  check('class roster is applied', applied.includes('4 students') && applied.includes('Period 3'), applied);
+  check('class constraints are applied', applied.includes('with Grace Hopper'), applied);
+  await page.getByRole('button', { name: /^Ada Lovelace/ }).click();
+  check('class tags are applied', (await right.getByText('reader').count()) >= 1);
+  await shoot('02-class-applied');
+
+  // Edit the roster, save it back to the class, and reuse it.
+  const add = page.getByLabel('Add a student by name');
+  await add.fill('Student 5');
+  await add.press('Enter');
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: 'Save changes to class' }).click();
+  await page.getByRole('button', { name: 'Save to class' }).click();
+  await page.waitForTimeout(600);
+  check('class update reports five students', (await page.locator('aside').last().innerText()).includes('5 students'));
+
+  await page.getByRole('link', { name: 'Back to all lessons' }).click();
+  await page.getByRole('button', { name: 'New lesson' }).first().waitFor({ timeout: 10000 });
+  await page.getByRole('button', { name: 'New lesson' }).first().click();
+  await page.waitForURL(/\/lessons\//);
+  await page.waitForTimeout(600);
+  await page.getByRole('tab', { name: 'Roster' }).click();
+  await page.getByLabel('Choose a class').selectOption({ index: 1 });
+  await page.getByRole('button', { name: 'Use class' }).click();
+  await page.waitForTimeout(600);
+  check(
+    'updated class is reusable',
+    (await page.locator('aside').last().innerText()).includes('5 students'),
+    await page.locator('aside').last().innerText(),
+  );
+  await shoot('03-class-updated');
+}
+
 async function main() {
   const opts = parseArgs(process.argv);
   await mkdir(opts.out, { recursive: true });
@@ -447,6 +526,7 @@ async function main() {
     page.on('pageerror', (err) => pageErrors.push(err.message));
 
     if (opts.flow === 'lesson') await runLessonFlow(page, opts, shoot, checks);
+    else if (opts.flow === 'classes') await runClassesFlow(page, opts, shoot, checks);
     else await runLoadFlow(page, opts, shoot);
 
     const title = await page.title();

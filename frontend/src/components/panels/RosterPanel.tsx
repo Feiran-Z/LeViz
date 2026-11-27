@@ -17,6 +17,7 @@ import { useRosterStore, type ConstraintKind } from '../../stores/rosterStore';
 import { useUiStore } from '../../stores/uiStore';
 import { redoRoster, undoRoster, useRosterHistory } from '../../hooks/useUndoRedo';
 import { Icon } from '../ui/Icons';
+import { RosterClassSection } from './RosterClassSection';
 
 function useActiveLayout(): LayoutSegment | null {
   const activeSegmentId = useUiStore((state) => state.activeSegmentId);
@@ -399,6 +400,8 @@ export function RosterPanel() {
           </button>
         </div>
       </div>
+
+      <RosterClassSection />
 
       <div className="px-4 pb-2">
         <div className="flex gap-1.5">
