@@ -1,17 +1,7 @@
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import { totalMinutes } from '../../domain/lesson';
 import type { Lesson, LessonSummary } from '../../domain/types';
 import type { LessonRepository } from '../types';
-
-interface LevizDB extends DBSchema {
-  lessons: {
-    key: string;
-    value: Lesson;
-    indexes: { 'by-updatedAt': string };
-  };
-}
-
-const DB_VERSION = 1;
+import { openLevizDb } from './db';
 
 export function summarize(lesson: Lesson): LessonSummary {
   return {
@@ -26,17 +16,12 @@ export function summarize(lesson: Lesson): LessonSummary {
   };
 }
 
-/** IndexedDB-backed repository. This is the only Phase 1 module that imports `idb`. */
+/** IndexedDB-backed lesson repository; the schema lives in `db.ts`. */
 export class IndexedDbLessonRepository implements LessonRepository {
-  private readonly dbPromise: Promise<IDBPDatabase<LevizDB>>;
+  private readonly dbPromise: ReturnType<typeof openLevizDb>;
 
   constructor(dbName = 'leviz') {
-    this.dbPromise = openDB<LevizDB>(dbName, DB_VERSION, {
-      upgrade(db) {
-        const store = db.createObjectStore('lessons', { keyPath: 'id' });
-        store.createIndex('by-updatedAt', 'updatedAt');
-      },
-    });
+    this.dbPromise = openLevizDb(dbName);
   }
 
   async listLessons(): Promise<LessonSummary[]> {

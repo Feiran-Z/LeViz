@@ -1,7 +1,13 @@
 import { IndexedDbLessonRepository } from './indexeddb';
-import type { LessonRepository } from './types';
+import { IndexedDbClassRosterRepository } from './indexeddb/classes';
+import type { ClassRosterRepository, LessonRepository } from './types';
 
 let repository: LessonRepository | null = null;
+let classRepository: ClassRosterRepository | null = null;
+
+function pocketBaseUrl(): string | undefined {
+  return import.meta.env['VITE_POCKETBASE_URL' as keyof ImportMetaEnv] as string | undefined;
+}
 
 /**
  * The only module that knows which persistence implementation is active.
@@ -9,8 +15,7 @@ let repository: LessonRepository | null = null;
  */
 export function getLessonRepository(): LessonRepository {
   if (repository) return repository;
-  const pocketBaseUrl = import.meta.env['VITE_POCKETBASE_URL' as keyof ImportMetaEnv] as string | undefined;
-  if (pocketBaseUrl) {
+  if (pocketBaseUrl()) {
     // Phase 2 will construct PocketBaseLessonRepository here. Until then the
     // app stays fully usable rather than failing to start.
     console.warn('[LeViz] VITE_POCKETBASE_URL is set, but PocketBase persistence ships in Phase 2. Using IndexedDB.');
@@ -22,4 +27,19 @@ export function getLessonRepository(): LessonRepository {
 /** Test seam only. */
 export function setLessonRepository(next: LessonRepository | null): void {
   repository = next;
+}
+
+/** The class roster library. Phase 2 adds a PocketBase implementation. */
+export function getClassRosterRepository(): ClassRosterRepository {
+  if (classRepository) return classRepository;
+  if (pocketBaseUrl()) {
+    console.warn('[LeViz] VITE_POCKETBASE_URL is set, but PocketBase persistence ships in Phase 2. Using IndexedDB for classes.');
+  }
+  classRepository = new IndexedDbClassRosterRepository();
+  return classRepository;
+}
+
+/** Test seam only. */
+export function setClassRosterRepository(next: ClassRosterRepository | null): void {
+  classRepository = next;
 }

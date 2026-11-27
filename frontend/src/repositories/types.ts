@@ -1,4 +1,4 @@
-import type { Lesson, LessonSummary } from '../domain/types';
+import type { ClassRoster, Lesson, LessonSummary } from '../domain/types';
 
 /**
  * The persistence contract. Every implementation (IndexedDB in Phase 1,
@@ -9,4 +9,15 @@ export interface LessonRepository {
   getLesson(id: string): Promise<Lesson | null>;
   saveLesson(lesson: Lesson): Promise<Lesson>;
   deleteLesson(id: string): Promise<void>;
+}
+
+/**
+ * The reusable class roster library. A second aggregate beside lessons: classes
+ * span lessons, while a lesson keeps its own roster snapshot.
+ */
+export interface ClassRosterRepository {
+  listClasses(): Promise<ClassRoster[]>;
+  getClass(id: string): Promise<ClassRoster | null>;
+  saveClass(classRoster: ClassRoster): Promise<ClassRoster>;
+  deleteClass(id: string): Promise<void>;
 }
