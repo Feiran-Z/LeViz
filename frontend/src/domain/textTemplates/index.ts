@@ -67,8 +67,10 @@ export const TEXT_TEMPLATES: TextTemplate[] = [
     durationMin: 3,
     content: doc(
       paragraph(text('By the end of the lesson, students will be able to:')),
-      list(false, ['I can [first goal].', 'I can [second goal].']),
+      list(false, ['They can [first content goal].', 'They can [second content goal].']),
       paragraph(text('Why this matters: [connect to the unit or a real-world use].')),
+      paragraph(text('Students will also be able to:')),
+      list(false, ['They can [first language goal].', 'They can [second language goal].']),
     ),
   },
   {
@@ -124,10 +126,8 @@ export const TEXT_TEMPLATES: TextTemplate[] = [
     title: 'Mini-lesson',
     durationMin: 15,
     content: doc(
-      paragraph(text('Teacher-led explanation with a model before students practise independently.')),
-      heading('Learning target'),
-      paragraph(text('I can [verb] [concept or skill].')),
-      heading('Model'),
+      paragraph(text('Teacher-led explanation of a concept, theory, or model, before students practise independently.')),
+      heading('Concept/Theory/Model'),
       list(true, [
         'Show the worked example.',
         'Think aloud through the key decisions.',
@@ -135,6 +135,8 @@ export const TEXT_TEMPLATES: TextTemplate[] = [
       ]),
       heading('Check for understanding'),
       paragraph(text('Ask two students to explain the model in their own words before practice.')),
+      heading('Resources'),
+      paragraph(text('Links to the resources: [link 1], [link 2], [link 3]')),
     ),
   },
   {
