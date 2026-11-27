@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { temporal } from 'zundo';
+import { pruneAssignmentsToRoster } from '../domain/classRoster';
 import { clampClassSize, createLayoutSegment, createTextSegment, totalMinutes } from '../domain/lesson';
 import { applyTemplate, templateFor } from '../domain/templates';
 import type {
   ActivityType,
   CanvasNode,
   CanvasState,
+  ClassRoster,
   LayoutSegment,
   Lesson,
   NodeNote,
@@ -57,6 +59,9 @@ interface LessonState {
   addTextSegment: (templateId?: TextTemplateId) => string | null;
   addLayoutSegment: (activityType: ActivityType) => string | null;
   updateSegment: (segmentId: string, patch: SegmentPatch) => void;
+  applyClassRoster: (classRoster: ClassRoster, options: { setClassSize: boolean }) => void;
+  linkClass: (classId: string) => void;
+  unlinkClass: () => void;
   removeSegment: (segmentId: string) => void;
   moveSegment: (activeId: string, overId: string) => void;
 
@@ -110,6 +115,17 @@ export const useLessonStore = create<LessonState>()(
         const lesson = get().lesson;
         if (!lesson) return;
         set((state) => ({ lesson: update(lesson), docRevision: state.docRevision + 1 }));
+      };
+
+      // Class-link operations are deliberate and confirmed; keeping them out of
+      // undo avoids a classId that disappears while the roster stays changed.
+      const mutateDetached = (update: (lesson: Lesson) => Lesson) => {
+        const lesson = get().lesson;
+        if (!lesson) return;
+        const temporalStore = useLessonStore.temporal.getState();
+        temporalStore.pause();
+        set((state) => ({ lesson: update(lesson), docRevision: state.docRevision + 1 }));
+        temporalStore.resume();
       };
 
       return {
@@ -217,6 +233,19 @@ export const useLessonStore = create<LessonState>()(
             mapSegments(lesson, segmentId, (segment) => ({ ...segment, ...patch }) as Segment),
           );
         },
+
+        applyClassRoster: (classRoster, options) => {
+          const rosterIds = new Set(classRoster.students.map((student) => student.id));
+          mutateDetached((lesson) => ({
+            ...lesson,
+            classId: classRoster.id,
+            ...(options.setClassSize ? { classSize: classRoster.students.length } : {}),
+            segments: pruneAssignmentsToRoster(lesson.segments, rosterIds),
+          }));
+        },
+
+        linkClass: (classId) => mutateDetached((lesson) => ({ ...lesson, classId })),
+        unlinkClass: () => mutateDetached((lesson) => ({ ...lesson, classId: null })),
 
         removeSegment: (segmentId) => {
           mutate((lesson) => ({

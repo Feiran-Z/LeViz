@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { createClassRoster } from '../domain/classRoster';
 import { createCanvasNode, createLesson } from '../domain/lesson';
 import { generateGroups } from '../domain/grouping';
 import { setLessonRepository } from '../repositories';
@@ -200,5 +201,62 @@ describe('lessonStore.save', () => {
 
     expect(useLessonStore.getState().lesson).toBeNull();
     expect(useLessonStore.getState().status).toBe('idle');
+  });
+
+  it('applies a class snapshot, prunes assignments, and leaves geometry alone', () => {
+    const students = classOf(3);
+    useRosterStore.getState().load(students);
+    useLessonStore.getState().setClassSize(20);
+    const segmentId = useLessonStore.getState().addLayoutSegment('group-discussion');
+    if (!segmentId) throw new Error('layout segment not created');
+
+    const before = useLessonStore.getState().lesson?.segments.find((segment) => segment.id === segmentId);
+    if (!before || before.kind !== 'layout') throw new Error('layout missing');
+    const table = before.canvas.nodes.find((node) => node.type === 'round-table');
+    if (!table) throw new Error('table missing');
+    useLessonStore.getState().updateNode(segmentId, table.id, {
+      assignedStudentIds: students.map((student) => student.id),
+    });
+    const geometry = { x: table.x, y: table.y, width: table.width, height: table.height };
+
+    const roster = createClassRoster('Period 3', [students[0]!, students[1]!]);
+    const undoDepth = useLessonStore.temporal.getState().pastStates.length;
+    useLessonStore.getState().applyClassRoster(roster, { setClassSize: true });
+
+    const lesson = useLessonStore.getState().lesson;
+    expect(lesson?.classId).toBe(roster.id);
+    expect(lesson?.classSize).toBe(2);
+    const after = lesson?.segments.find((segment) => segment.id === segmentId);
+    if (!after || after.kind !== 'layout') throw new Error('layout missing');
+    const updatedTable = after.canvas.nodes.find((node) => node.id === table.id);
+    expect(updatedTable?.assignedStudentIds).toEqual([students[0]!.id, students[1]!.id]);
+    expect({ x: updatedTable?.x, y: updatedTable?.y, width: updatedTable?.width, height: updatedTable?.height }).toEqual(geometry);
+    expect(useLessonStore.temporal.getState().pastStates.length).toBe(undoDepth);
+  });
+
+  it('refreshes class assignments without changing class size or undo history', () => {
+    const students = classOf(3);
+    useRosterStore.getState().load(students);
+    useLessonStore.getState().setClassSize(24);
+    const segmentId = useLessonStore.getState().addLayoutSegment('group-discussion');
+    if (!segmentId) throw new Error('layout segment not created');
+    const roster = createClassRoster('Period 3', [students[0]!, students[1]!]);
+    useLessonStore.getState().applyClassRoster(roster, { setClassSize: true });
+    useLessonStore.getState().setClassSize(24);
+
+    const undoDepth = useLessonStore.temporal.getState().pastStates.length;
+    useLessonStore.getState().applyClassRoster(roster, { setClassSize: false });
+
+    expect(useLessonStore.getState().lesson?.classSize).toBe(24);
+    expect(useLessonStore.temporal.getState().pastStates.length).toBe(undoDepth);
+  });
+
+  it('links and unlinks a class without adding undo history', () => {
+    const undoDepth = useLessonStore.temporal.getState().pastStates.length;
+    useLessonStore.getState().linkClass('class_1');
+    expect(useLessonStore.getState().lesson?.classId).toBe('class_1');
+    useLessonStore.getState().unlinkClass();
+    expect(useLessonStore.getState().lesson?.classId).toBeNull();
+    expect(useLessonStore.temporal.getState().pastStates.length).toBe(undoDepth);
   });
 });
