@@ -23,6 +23,8 @@ for teach mode, print cards, and cross-device sync.
 
 ## 2. Teach mode with timers
 
+**Status:** Implemented (V1). Design: [Teach mode design](../superpowers/specs/2026-11-28-teach-mode-design.md).
+
 **Teacher pain:** LeViz is excellent before class and silent during it. The
 teacher still needs a separate timer for segments and station rotations.
 

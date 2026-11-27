@@ -10,19 +10,21 @@ spatial layout segments, where furniture and stations on a canvas carry notes an
 assigned students. This skill covers the **`frontend/` Vite SPA** only. All paths
 below are relative to `LeViz/frontend/`.
 
-## ✅ Status: verified (2026-11-27)
+## ✅ Status: verified (2026-11-28)
 
 Every command below was executed against Phase 1 of the implementation plan on this
 machine. Evidence from that run:
 
-- `npm test` → **16 files, 122 tests passed**, including the class-repository contract
-  and the IndexedDB v1 → v2 migration test.
+- `npm test` → **19 files, 144 tests passed**, including the class-repository contract,
+  the IndexedDB v1 → v2 migration, and the teach timer/close tests.
 - `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.15 MB
   (358 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 32 checks
   passed**, zero console errors, zero page errors, 16 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow classes` → **all 14 checks
   passed**, zero console errors, zero page errors, 4 non-blank screenshots.
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow teach` → **all 25 checks
+  passed**, zero console errors, zero page errors, 5 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
 (asserting 12 chairs + teacher), adds four students,
@@ -39,6 +41,12 @@ the removed assignment, refreshing replaces a lesson-only student, saving back a
 student, and unlinking keeps the roster. It reuses the updated class, renames it in the
 Classes manager, and deletes it — asserting the linked lesson keeps its roster snapshot
 and shows the class as unavailable.
+
+The `teach` flow builds a text segment, a station-rotation layout with groups, and a
+gallery-walk layout with a stop prompt, then opens teach mode from the lesson card. It
+checks the text timer, start/pause/reset/+1, time-up without auto-advance, next/previous,
+a reload restoring paused, station and gallery rotation guides, the guide toggle, and
+the editor/overview Teach entries.
 
 ## Prerequisites
 
@@ -110,14 +118,14 @@ Driver flags:
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--flow load\|lesson\|classes` | `load` | `load` = open + screenshot. `lesson` = full end-to-end smoke. `classes` = reusable class roster lifecycle. |
+| `--flow load\|lesson\|classes\|teach` | `load` | `load` = open + screenshot. `lesson` = full end-to-end smoke. `classes` = reusable class roster lifecycle. `teach` = teach-mode timers and rotation guides. |
 | `--url URL` | `http://localhost:5173` | Page to open |
 | `--out DIR` | `screenshots` | Where PNGs and the exported JSON land |
 | `--headed` | off | Show a real window |
 | `--timeout MS` | `30000` | Navigation timeout |
 | `--no-fail-on-console` | off | Do not fail on `console.error` |
 
-The driver prints a JSON summary. With `--flow lesson` or `--flow classes` it includes a `checks` array:
+The driver prints a JSON summary. With `--flow lesson`, `--flow classes`, or `--flow teach` it includes a `checks` array:
 
 ```json
 { "ok": true, "flow": "lesson", "browser": "system Chrome",
@@ -180,6 +188,7 @@ a real browser: do not try to validate the canvas with jsdom.
 - Canvas geometry, template coordinates, or the editor shell layout change → update
   the driver's coordinates and re-run `--flow lesson`.
 - Roster or class-library UI/persistence changes → re-run `--flow classes`.
+- Teach-mode timer, layout, or rotation changes → re-run `--flow teach`.
 - New routes, panels, or persistence implementations are added.
 - Node major version changes (Vitest advertises engine ranges that exclude some
   odd-numbered Node releases; v25.8.1 works, install-time warnings are harmless).

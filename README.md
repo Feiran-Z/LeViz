@@ -4,6 +4,10 @@ A visual lesson planner: a lesson is an ordered flow of rich-text segments and
 spatial classroom layouts, with rosters, station notes, and designed engagement
 in one document.
 
+Teach mode runs a lesson read-only with segment timers, the current text or
+layout, station cards, and rotation guides for station rotation and gallery
+walk. It is available from a lesson card, the editor, and the overview.
+
 **Live preview:** <https://feiran-z.github.io/LeViz/>
 
 ## Pilot notes
@@ -17,6 +21,8 @@ in one document.
   restores them.
 - **Class rosters are local too.** A lesson export carries that lesson's roster
   snapshot but not the class library. Class library backup/export is a follow-up.
+- **Teach mode does not edit lessons.** It opens a read-only run; timers and chimes
+  are local to the tab.
 - **Desktop and laptop first.** The editor is usable on a tablet; phone layout is
   out of scope.
 - The site is public. Use fictional student names in any demo lessons.
@@ -54,10 +60,10 @@ Project documentation lives in `.claude/documentation/`.
 
 ```
 frontend/        Vite + React 19 + TypeScript SPA
-  src/domain/    pure lesson/class-roster model, serialization, grouping, engagement
+  src/domain/    pure lesson/class/teach model, serialization, grouping, engagement
   src/stores/    Zustand state and class session use cases
   src/canvas/    Konva classroom canvas
-  src/components/segments, panels, overview, classes, engagement, pilot
+  src/components/segments, panels, overview, classes, teach, engagement, pilot
 .github/         Pages deployment workflow
 docs/            deployment and planning notes
 ```
