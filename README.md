@@ -59,3 +59,12 @@ frontend/        Vite + React 19 + TypeScript SPA
 .github/         Pages deployment workflow
 docs/            deployment and planning notes
 ```
+
+## License
+
+The LeViz code is released under the [MIT License](LICENSE).
+
+The bundled Inter and Merriweather fonts are licensed under the SIL Open Font
+License 1.1; their copyright lines and the full license text are in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The remaining npm dependencies
+retain their own licenses, as recorded in `frontend/package-lock.json`.
