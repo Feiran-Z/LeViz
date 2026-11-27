@@ -6,6 +6,7 @@ import { useLessonDocument } from '../hooks/useLessonDocument';
 import { useTeachRun } from '../hooks/useTeachRun';
 import { useLessonStore } from '../stores/lessonStore';
 import { useRosterStore } from '../stores/rosterStore';
+import { RotationGuide } from '../components/teach/RotationGuide';
 import { TeachContent } from '../components/teach/TeachContent';
 import { TeachTimer } from '../components/teach/TeachTimer';
 import { Icon } from '../components/ui/Icons';
@@ -103,6 +104,8 @@ function TeachRunner({
         return;
       }
       if (event.key === ' ') {
+        // Let a focused button/link handle its own Space activation.
+        if (target instanceof HTMLElement && target.closest('button, a, [role="button"]')) return;
         event.preventDefault();
         actions.toggle();
       } else if (event.key === 'ArrowLeft') {
@@ -137,6 +140,8 @@ function TeachRunner({
   }
 
   const next = run.segments[state.segmentIndex + 1] ?? null;
+  const layout = segment.segment.kind === 'layout' ? segment.segment : null;
+  const activeStopNodeId = teach.rotation?.stops[state.stopIndex]?.id ?? null;
   const plannedEnd = new Date(teach.plannedEndAt).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
@@ -191,7 +196,22 @@ function TeachRunner({
             onPrevious={actions.previous}
             onNext={actions.next}
           />
-          <TeachContent segment={segment.segment} />
+          {layout ? (
+            <RotationGuide
+              segment={layout}
+              rotation={teach.rotation}
+              enabled={state.rotationEnabled}
+              remainingMs={teach.rotationRemainingMs}
+              stopIndex={state.stopIndex}
+              onToggle={actions.setRotation}
+              onNext={actions.nextStop}
+            />
+          ) : null}
+          <TeachContent
+            segment={segment.segment}
+            students={students}
+            activeStopNodeId={activeStopNodeId}
+          />
           <p className="text-xs text-secondary">
             {next ? `Next: ${next.segment.title} · ${next.durationMin} min` : 'Last segment'}
           </p>

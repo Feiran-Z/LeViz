@@ -743,6 +743,19 @@ async function runTeachFlow(page, opts, shoot, checks) {
   await page.getByRole('button', { name: 'Rotation guide' }).click();
   await page.waitForTimeout(200);
   check('rotation guide can be turned back on', (await page.locator('body').innerText()).includes('Station 1 of 4'));
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.clock.fastForward(10_000);
+  await page.waitForTimeout(150);
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForTimeout(900);
+  const stationReload = await page.locator('body').innerText();
+  check(
+    'reload restores the station guide paused',
+    stationReload.includes('Paused') &&
+      stationReload.includes('Station 1 of 4') &&
+      stationReload.includes('14:50'),
+    stationReload,
+  );
   await shoot('04-station-rotation');
 
   await page.getByRole('button', { name: 'Next', exact: true }).click();

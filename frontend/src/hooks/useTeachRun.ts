@@ -16,7 +16,7 @@ import {
   segmentElapsedMs,
   type TeachTimerState,
 } from '../domain/teachTimer';
-import { playChime } from '../lib/chime';
+import { playChime, primeChime } from '../lib/chime';
 
 const SESSION_PREFIX = 'leviz-teach:';
 const SOUND_KEY = 'leviz-teach-sound';
@@ -218,13 +218,18 @@ export function useTeachRun({
 
   const actions = useMemo<TeachRunActions>(
     () => ({
-      start: () => dispatch({ type: 'start', now: Date.now() }),
+      start: () => {
+        primeChime();
+        dispatch({ type: 'start', now: Date.now() });
+      },
       pause: () => dispatch({ type: 'pause', now: Date.now() }),
-      toggle: () =>
+      toggle: () => {
+        if (!stateRef.current.running) primeChime();
         dispatch({
           type: stateRef.current.running ? 'pause' : 'start',
           now: Date.now(),
-        }),
+        });
+      },
       reset: () => dispatch({ type: 'reset' }),
       addMinute: () => dispatch({ type: 'add', ms: 60_000 }),
       next: () => dispatch({ type: 'next' }),
@@ -232,6 +237,7 @@ export function useTeachRun({
       nextStop: () => dispatch({ type: 'nextStop', now: Date.now() }),
       setRotation: (enabled) => dispatch({ type: 'setRotation', enabled }),
       setSound: (enabled) => {
+        if (enabled) primeChime();
         writeSoundOn(enabled);
         dispatch({ type: 'setSound', enabled });
       },

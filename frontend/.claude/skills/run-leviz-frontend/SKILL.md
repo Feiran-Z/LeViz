@@ -23,7 +23,7 @@ machine. Evidence from that run:
   passed**, zero console errors, zero page errors, 16 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow classes` → **all 14 checks
   passed**, zero console errors, zero page errors, 4 non-blank screenshots.
-- `node .claude/skills/run-leviz-frontend/driver.mjs --flow teach` → **all 25 checks
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow teach` → **all 26 checks
   passed**, zero console errors, zero page errors, 5 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template

@@ -59,7 +59,7 @@ export function RotationGuide({
         ) : enabled ? (
           <span className="text-xs text-secondary">Add at least two stops to use the guide.</span>
         ) : (
-          <span className="text-xs text-secondary">Automatic for station rotation and gallery walk.</span>
+          <span className="text-xs text-secondary">Turn on to time stations or stops.</span>
         )}
       </div>
     </section>

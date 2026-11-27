@@ -1,18 +1,32 @@
 let context: AudioContext | null = null;
 
-/**
- * A short two-tone chime for the end of a teach segment. No audio asset; the
- * context is created lazily on a user gesture (Start or the sound toggle).
- */
-export function playChime(): void {
+function audioContext(): AudioContext | null {
   try {
     const AudioCtor =
       window.AudioContext ??
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtor) return;
+    if (!AudioCtor) return null;
     context ??= new AudioCtor();
-    const audio = context;
-    if (!audio) return;
+    return context;
+  } catch {
+    return null;
+  }
+}
+
+/** Call from a user gesture (Start or enabling sound) to unlock audio. */
+export function primeChime(): void {
+  const audio = audioContext();
+  if (audio && audio.state === 'suspended') void audio.resume();
+}
+
+/**
+ * A short two-tone chime for the end of a teach segment. No audio asset; the
+ * context is primed by a user gesture before the chime is needed.
+ */
+export function playChime(): void {
+  const audio = audioContext();
+  if (!audio) return;
+  try {
     if (audio.state === 'suspended') void audio.resume();
 
     const start = audio.currentTime;
