@@ -495,6 +495,43 @@ async function runClassesFlow(page, opts, shoot, checks) {
     await page.locator('aside').last().innerText(),
   );
   await shoot('03-class-updated');
+
+  // Manager: rename and delete; a deleted class keeps the lesson snapshot.
+  await page.getByRole('link', { name: 'Back to all lessons' }).click();
+  await page.getByRole('button', { name: 'Classes' }).first().waitFor({ timeout: 10000 });
+  await page.getByRole('button', { name: 'Classes' }).first().click();
+  await page.getByRole('button', { name: 'Rename Period 3' }).click();
+  await page.getByLabel('Class name').fill('Period 3A');
+  await page.getByRole('button', { name: 'Rename', exact: true }).click();
+  await page.waitForTimeout(500);
+  check(
+    'class rename is reflected in the manager',
+    (await page.getByRole('dialog').first().innerText()).includes('Period 3A'),
+  );
+  await page.getByRole('button', { name: 'Close classes' }).click();
+  await page.waitForTimeout(300);
+
+  await page.getByRole('link', { name: 'Untitled lesson' }).first().click();
+  await page.waitForURL(/\/lessons\//);
+  await page.waitForTimeout(700);
+  await page.getByRole('tab', { name: 'Roster' }).click();
+  check(
+    'renamed class appears on the linked lesson',
+    (await page.locator('aside').last().innerText()).includes('Period 3A'),
+  );
+
+  await page.getByRole('button', { name: 'Manage classes' }).click();
+  await page.getByRole('button', { name: 'Delete Period 3A' }).click();
+  await page.getByRole('button', { name: 'Delete class' }).click();
+  await page.waitForTimeout(500);
+  await page.getByRole('button', { name: 'Close classes' }).click();
+  const unavailable = await page.locator('aside').last().innerText();
+  check(
+    'deleted class keeps the roster snapshot',
+    unavailable.includes('Class unavailable') && unavailable.includes('5 students'),
+    unavailable,
+  );
+  await shoot('04-class-unavailable');
 }
 
 async function main() {

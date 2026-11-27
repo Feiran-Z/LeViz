@@ -12,6 +12,7 @@ import { useClassRosterStore } from '../../stores/classRosterStore';
 import { useLessonStore } from '../../stores/lessonStore';
 import { useRosterStore } from '../../stores/rosterStore';
 import { useUiStore } from '../../stores/uiStore';
+import { ClassesDialog } from '../classes/ClassesDialog';
 import { Icon } from '../ui/Icons';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { PromptDialog } from '../ui/PromptDialog';
@@ -37,6 +38,7 @@ export function RosterClassSection() {
 
   const [selectedId, setSelectedId] = useState('');
   const [promptOpen, setPromptOpen] = useState(false);
+  const [classesOpen, setClassesOpen] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmAction | null>(null);
 
   useEffect(() => {
@@ -88,7 +90,19 @@ export function RosterClassSection() {
 
   const shell = (children: ReactNode) => (
     <div className="px-4 pb-2">
-      <div className="rounded-md border border-default bg-page px-2.5 py-2">{children}</div>
+      <div className="rounded-md border border-default bg-page px-2.5 py-2">
+        {children}
+        <div className="mt-1">
+          <button
+            type="button"
+            className="text-[10px] text-secondary underline-offset-2 hover:text-primary hover:underline"
+            onClick={() => setClassesOpen(true)}
+          >
+            Manage classes
+          </button>
+        </div>
+      </div>
+      <ClassesDialog open={classesOpen} onClose={() => setClassesOpen(false)} />
     </div>
   );
 

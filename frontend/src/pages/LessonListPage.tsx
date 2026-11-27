@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ClassesDialog } from '../components/classes/ClassesDialog';
 import { AppFooter } from '../components/layout/AppFooter';
 import { PilotNotice } from '../components/pilot/PilotNotice';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
@@ -34,6 +35,7 @@ export function LessonListPage() {
   const importFromJson = useLibraryStore((state) => state.importFromJson);
   const [query, setQuery] = useState('');
   const [pendingDelete, setPendingDelete] = useState<LessonSummary | null>(null);
+  const [classesOpen, setClassesOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -113,6 +115,15 @@ export function LessonListPage() {
           <span className="hidden text-sm text-secondary sm:inline">Visual lesson planning</span>
           <div className="flex-1" />
           <ThemeButton />
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            aria-label="Classes"
+            onClick={() => setClassesOpen(true)}
+          >
+            <Icon name="users" size={15} />
+            <span className="hidden sm:inline">Classes</span>
+          </button>
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -269,6 +280,8 @@ export function LessonListPage() {
       </main>
 
       <AppFooter />
+
+      <ClassesDialog open={classesOpen} onClose={() => setClassesOpen(false)} />
 
       <ConfirmDialog
         open={pendingDelete !== null}
