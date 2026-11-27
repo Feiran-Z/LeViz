@@ -7,7 +7,7 @@ import '@fontsource/merriweather/400-italic.css';
 import '@fontsource/merriweather/700.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 
@@ -16,8 +16,8 @@ if (!container) throw new Error('Root element not found.');
 
 createRoot(container).render(
   <StrictMode>
-    <BrowserRouter>
+    <HashRouter>
       <App />
-    </BrowserRouter>
+    </HashRouter>
   </StrictMode>,
 );
