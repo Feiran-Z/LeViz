@@ -73,6 +73,10 @@ export function parseLesson(json: string): Lesson {
   // Older exports predate classSize; infer it from the roster or use the default.
   lesson['classSize'] = resolveClassSize(rawClassSize, lesson['roster'].length);
 
+  // Older exports have no class link; a malformed value means no link.
+  const rawClassId = lesson['classId'];
+  lesson['classId'] = typeof rawClassId === 'string' && rawClassId.length > 0 ? rawClassId : null;
+
   // Fill designed engagement for documents written before it existed.
   return normalizeLessonEngagement(lesson as unknown as Lesson);
 }

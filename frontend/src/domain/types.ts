@@ -119,6 +119,15 @@ export interface Student {
   togetherWith: string[];
 }
 
+/** A reusable class roster, stored beside lessons rather than inside one. */
+export interface ClassRoster {
+  id: string;
+  name: string;
+  students: Student[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LessonMeta {
   id: string;
   title: string;
@@ -128,6 +137,8 @@ export interface LessonMeta {
   durationMin: number;
   /** Planned number of students. Layout templates size themselves from this. */
   classSize: number;
+  /** Linked class roster id; null when the lesson owns its roster. */
+  classId: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -125,6 +125,7 @@ export function createLesson(title = 'Untitled lesson'): Lesson {
     lessonDate: null,
     durationMin: DEFAULT_PERIOD_MINUTES,
     classSize: DEFAULT_CLASS_SIZE,
+    classId: null,
     createdAt: now,
     updatedAt: now,
     roster: [],

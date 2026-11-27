@@ -25,12 +25,14 @@ export async function openLesson(id: string): Promise<void> {
       return;
     }
     // Documents saved before classSize existed infer it from the roster.
-    const withClassSize: Lesson = {
+    // The same pass fills the class link for documents written before classes.
+    const withDefaults: Lesson = {
       ...lesson,
       classSize: resolveClassSize(lesson.classSize, lesson.roster.length),
+      classId: lesson.classId ?? null,
     };
     // Documents saved before designed engagement existed gain its defaults.
-    const normalized = normalizeLessonEngagement(withClassSize);
+    const normalized = normalizeLessonEngagement(withDefaults);
     useRosterStore.getState().load(normalized.roster);
     useLessonStore.getState().hydrate(normalized, 'ready');
   } catch (cause) {

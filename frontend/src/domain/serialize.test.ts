@@ -60,6 +60,21 @@ describe('serialize', () => {
     expect(restoredLayout.canvas.nodes[0]?.engagement).toBeNull();
   });
 
+  it('round-trips a lesson classId', () => {
+    const lesson = createLesson('Class lesson');
+    lesson.classId = 'class_1';
+    expect(parseLesson(serializeLesson(lesson)).classId).toBe('class_1');
+  });
+
+  it('normalizes a missing classId to null', () => {
+    const lesson = createLesson('Old class lesson');
+    const raw = JSON.parse(JSON.stringify({ schemaVersion: 1, lesson })) as {
+      lesson: Record<string, unknown>;
+    };
+    delete raw.lesson['classId'];
+    expect(parseLesson(JSON.stringify(raw)).classId).toBeNull();
+  });
+
   it('writes the schema version', () => {
     const parsed = JSON.parse(serializeLesson(createLesson())) as { schemaVersion: number };
     expect(parsed.schemaVersion).toBe(SCHEMA_VERSION);
