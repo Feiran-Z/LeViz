@@ -46,6 +46,12 @@ const PATHS = {
   printer: <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z" />,
   'circle-dot': <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />,
   seat: <path d="M6 19h12M7 19v-6h10v6M8 13V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v7" />,
+  play: <path d="M8 5v14l11-7Z" />,
+  pause: <path d="M9 5v14M15 5v14" />,
+  'skip-back': <path d="M19 5v14L8 12Z M5 5v14" />,
+  'skip-forward': <path d="M5 5v14l11-7Z M19 5v14" />,
+  volume: <path d="M11 5 6 9H3v6h3l5 4V5ZM16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12" />,
+  'volume-off': <path d="M11 5 6 9H3v6h3l5 4V5ZM16 9l5 6M21 9l-5 6" />,
 } as const;
 
 export type IconName = keyof typeof PATHS;

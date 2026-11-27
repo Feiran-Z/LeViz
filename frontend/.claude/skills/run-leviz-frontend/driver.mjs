@@ -59,8 +59,8 @@ function parseArgs(argv) {
       process.exit(2);
     }
   }
-  if (!['load', 'lesson', 'classes'].includes(opts.flow)) {
-    console.error(`--flow must be "load", "lesson", or "classes"`);
+  if (!['load', 'lesson', 'classes', 'teach'].includes(opts.flow)) {
+    console.error(`--flow must be "load", "lesson", "classes", or "teach"`);
     process.exit(2);
   }
   if (!Number.isFinite(opts.timeout) || opts.timeout <= 0) {
@@ -599,6 +599,101 @@ async function runClassesFlow(page, opts, shoot, checks) {
   await shoot('04-class-unavailable');
 }
 
+async function runTeachFlow(page, opts, shoot, checks) {
+  const check = (name, condition, detail) => {
+    checks.push({ name, ok: Boolean(condition), ...(detail ? { detail } : {}) });
+    if (!condition) throw new Error(`Check failed: ${name}${detail ? ` (${detail})` : ''}`);
+  };
+
+  await page.clock.install({ time: new Date('2026-11-28T09:00:00') });
+  await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
+  await page.getByRole('button', { name: 'New lesson' }).first().click();
+  await page.waitForURL(/\/lessons\//);
+  await page.waitForTimeout(700);
+
+  await page.getByRole('button', { name: 'Add text segment' }).first().click();
+  await page.getByRole('button', { name: /Do Now/ }).first().click();
+  await page.waitForTimeout(500);
+  const firstDuration = page.getByLabel('Segment duration in minutes');
+  await firstDuration.fill('1');
+  await firstDuration.press('Enter');
+  await page.waitForTimeout(300);
+
+  await page.getByRole('button', { name: 'Add text segment' }).first().click();
+  await page.getByRole('button', { name: /Debrief/ }).first().click();
+  await page.waitForTimeout(500);
+  const secondDuration = page.getByLabel('Segment duration in minutes');
+  await secondDuration.fill('5');
+  await secondDuration.press('Enter');
+  await page.waitForTimeout(300);
+
+  const lessonId = new URL(page.url()).hash.match(/lessons\/([^/?#]+)/)?.[1];
+  check('lesson created for teach', Boolean(lessonId), page.url());
+  const base = page.url().split('#')[0];
+  await page.goto(`${base}#/lessons/${lessonId}/teach`, { waitUntil: 'load' });
+  await page.waitForTimeout(800);
+
+  const timer = page.getByRole('timer');
+  const timerText = async () => timer.innerText();
+  check('teach route opens', /\/teach/.test(page.url()), page.url());
+  check('text segment timer starts at one minute', (await timerText()).includes('01:00'), await timerText());
+  check('text content is rendered', (await page.locator('body').innerText()).includes('Students begin immediately'));
+  await shoot('01-text-timer');
+
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.clock.fastForward(10_000);
+  await page.waitForTimeout(200);
+  check('timer counts down', (await timerText()).includes('00:50'), await timerText());
+
+  await page.getByRole('button', { name: 'Pause' }).click();
+  await page.clock.fastForward(5_000);
+  await page.waitForTimeout(150);
+  check('pause freezes the timer', (await timerText()).includes('00:50'), await timerText());
+
+  await page.getByRole('button', { name: /\+1:00/ }).click();
+  await page.waitForTimeout(150);
+  check('add a minute', (await timerText()).includes('01:50'), await timerText());
+
+  await page.getByRole('button', { name: 'Reset' }).click();
+  await page.waitForTimeout(150);
+  check('reset restores the planned duration', (await timerText()).includes('01:00'), await timerText());
+
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.clock.fastForward(61_000);
+  await page.waitForTimeout(200);
+  check('time-up pauses at zero', (await timerText()).includes('00:00') && (await page.locator('body').innerText()).includes("Time's up"), await timerText());
+  check('time-up does not auto-advance', (await page.locator('body').innerText()).includes('Do Now'));
+  await shoot('02-time-up');
+
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.waitForTimeout(200);
+  check('next advances to the debrief', (await timerText()).includes('05:00') && (await page.locator('body').innerText()).includes('Debrief'), await timerText());
+  await page.getByRole('button', { name: 'Previous' }).click();
+  await page.waitForTimeout(200);
+  check('previous returns to the do now', (await page.locator('body').innerText()).includes('Do Now'));
+
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.clock.fastForward(10_000);
+  await page.waitForTimeout(150);
+  const beforeReload = await timerText();
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForTimeout(900);
+  const afterReload = await timerText();
+  check(
+    'reload restores paused at the same segment',
+    (await page.locator('body').innerText()).includes('Paused') &&
+      (await page.locator('body').innerText()).includes('Do Now') &&
+      afterReload !== '01:00',
+    `${beforeReload} -> ${afterReload}`,
+  );
+  await shoot('03-reloaded');
+
+  await page.getByRole('button', { name: /Exit/ }).click();
+  await page.waitForURL(/\/lessons\/[^/]+$/);
+  await page.waitForTimeout(900);
+  check('exit returns to the editor', (await page.getByRole('tab', { name: 'Roster' }).count()) > 0);
+}
+
 async function main() {
   const opts = parseArgs(process.argv);
   await mkdir(opts.out, { recursive: true });
@@ -629,6 +724,7 @@ async function main() {
 
     if (opts.flow === 'lesson') await runLessonFlow(page, opts, shoot, checks);
     else if (opts.flow === 'classes') await runClassesFlow(page, opts, shoot, checks);
+    else if (opts.flow === 'teach') await runTeachFlow(page, opts, shoot, checks);
     else await runLoadFlow(page, opts, shoot);
 
     const title = await page.title();
