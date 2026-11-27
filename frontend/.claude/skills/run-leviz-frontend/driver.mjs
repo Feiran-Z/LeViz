@@ -452,26 +452,82 @@ async function runClassesFlow(page, opts, shoot, checks) {
   check('class is saved and linked', (await right.innerText()).includes('Period 3'), await right.innerText());
   await shoot('01-class-saved');
 
-  // Use the class in a new lesson.
+  // Use the class in a lesson that already has students and a seat assignment.
   await page.getByRole('link', { name: 'Back to all lessons' }).click();
   await page.getByRole('button', { name: 'New lesson' }).first().waitFor({ timeout: 10000 });
   await page.getByRole('button', { name: 'New lesson' }).first().click();
   await page.waitForURL(/\/lessons\//);
   await page.waitForTimeout(600);
   await page.getByRole('tab', { name: 'Roster' }).click();
+
+  const legacyInput = page.getByLabel('Add a student by name');
+  for (const name of ['Legacy One', 'Legacy Two']) {
+    await legacyInput.fill(name);
+    await legacyInput.press('Enter');
+    await page.waitForTimeout(100);
+  }
+  await page.getByRole('button', { name: 'Add layout segment' }).first().click();
+  await page.getByRole('button', { name: /Harkness discussion/ }).first().click();
+  await page.waitForTimeout(700);
+
+  await resetCanvasView(page);
+  const seat = await canvasPoint(page, 500, 70);
+  const avatar = page
+    .locator('li', { hasText: 'Legacy One' })
+    .first()
+    .getByRole('button', { name: /Drag Legacy One/ });
+  const avatarBox = await avatar.boundingBox();
+  if (!avatarBox) throw new Error('Legacy One avatar not found');
+  const dragStart = { x: avatarBox.x + avatarBox.width / 2, y: avatarBox.y + avatarBox.height / 2 };
+  await page.mouse.move(dragStart.x, dragStart.y);
+  await page.mouse.down();
+  for (let step = 1; step <= 12; step += 1) {
+    await page.mouse.move(
+      dragStart.x + ((seat.x - dragStart.x) * step) / 12,
+      dragStart.y + ((seat.y - dragStart.y) * step) / 12,
+    );
+    await page.waitForTimeout(20);
+  }
+  await page.mouse.up();
+  await page.waitForTimeout(500);
+  check(
+    'legacy student is seated before applying the class',
+    /Legacy One → Seat/.test(await page.locator('body').innerText()),
+  );
+
   await page.getByLabel('Choose a class').selectOption({ index: 1 });
   await page.getByRole('button', { name: 'Use class' }).click();
+  const applyDialog = page.getByRole('dialog');
+  const applyCopy = await applyDialog.innerText();
+  check(
+    'apply confirmation names the assignment loss',
+    applyCopy.includes('1 seat assignment will be removed'),
+    applyCopy,
+  );
+  await applyDialog.getByRole('button', { name: 'Use class' }).click();
   await page.waitForTimeout(600);
   right = page.locator('aside').last();
   const applied = await right.innerText();
   check('class roster is applied', applied.includes('4 students') && applied.includes('Period 3'), applied);
   check('class constraints are applied', applied.includes('with Grace Hopper'), applied);
+  check('dropped legacy students are gone', !applied.includes('Legacy One'), applied);
   await page.getByRole('button', { name: /^Ada Lovelace/ }).click();
   check('class tags are applied', (await right.getByText('reader').count()) >= 1);
   await shoot('02-class-applied');
 
-  // Edit the roster, save it back to the class, and reuse it.
+  // Refresh replaces a lesson-only student with the class snapshot.
   const add = page.getByLabel('Add a student by name');
+  await add.fill('Temporary Student');
+  await add.press('Enter');
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: 'Refresh from class' }).click();
+  const refreshDialog = page.getByRole('dialog');
+  await refreshDialog.getByRole('button', { name: 'Refresh class' }).click();
+  await page.waitForTimeout(600);
+  const refreshed = await page.locator('aside').last().innerText();
+  check('refresh restores the class roster', refreshed.includes('4 students') && !refreshed.includes('Temporary Student'), refreshed);
+
+  // Save a new student back to the class, then unlink and keep the snapshot.
   await add.fill('Student 5');
   await add.press('Enter');
   await page.waitForTimeout(300);
@@ -479,6 +535,15 @@ async function runClassesFlow(page, opts, shoot, checks) {
   await page.getByRole('button', { name: 'Save to class' }).click();
   await page.waitForTimeout(600);
   check('class update reports five students', (await page.locator('aside').last().innerText()).includes('5 students'));
+
+  await page.getByRole('button', { name: 'Unlink' }).click();
+  await page.waitForTimeout(400);
+  right = page.locator('aside').last();
+  check(
+    'unlink keeps the roster',
+    (await right.getByLabel('Choose a class').count()) === 1 && (await right.innerText()).includes('5 students'),
+    await right.innerText(),
+  );
 
   await page.getByRole('link', { name: 'Back to all lessons' }).click();
   await page.getByRole('button', { name: 'New lesson' }).first().waitFor({ timeout: 10000 });

@@ -21,7 +21,7 @@ machine. Evidence from that run:
   (358 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 32 checks
   passed**, zero console errors, zero page errors, 16 non-blank screenshots.
-- `node .claude/skills/run-leviz-frontend/driver.mjs --flow classes` → **all 9 checks
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow classes` → **all 14 checks
   passed**, zero console errors, zero page errors, 4 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
@@ -33,10 +33,12 @@ re-imports the JSON. It also checks the copyright/license footer on the lesson l
 (including the served third-party notices file) and the overview, verifies the footer
 prints, and asserts the editor has no footer.
 
-The `classes` flow creates a tagged and paired roster, saves it as a class, applies the
-class to a second lesson, adds a student and saves the roster back to the class, reuses
-the updated class, renames it in the Classes manager, and deletes it — asserting the
-linked lesson keeps its roster snapshot and shows the class as unavailable.
+The `classes` flow creates a tagged and paired roster, saves it as a class, then seats a
+legacy student in a new lesson and applies the class — asserting the confirmation names
+the removed assignment, refreshing replaces a lesson-only student, saving back adds a
+student, and unlinking keeps the roster. It reuses the updated class, renames it in the
+Classes manager, and deletes it — asserting the linked lesson keeps its roster snapshot
+and shows the class as unavailable.
 
 ## Prerequisites
 
