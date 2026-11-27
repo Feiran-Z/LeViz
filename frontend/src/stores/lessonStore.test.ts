@@ -82,6 +82,26 @@ describe('lessonStore.save', () => {
     }
   });
 
+  it('uses every discussion table when there are five groups and five tables', () => {
+    useLessonStore.getState().setClassSize(20);
+    const students = classOf(12);
+    useRosterStore.getState().load(students);
+    const segmentId = useLessonStore.getState().addLayoutSegment('group-discussion');
+    if (!segmentId) throw new Error('layout segment not created');
+
+    const groups = generateGroups(students, { groupCount: 5, mode: 'random', seed: 7 });
+    const outcome = useLessonStore.getState().applyGroups(segmentId, groups.groups);
+
+    const segment = useLessonStore.getState().lesson?.segments.find((candidate) => candidate.id === segmentId);
+    if (!segment || segment.kind !== 'layout') throw new Error('layout missing');
+    const tables = segment.canvas.nodes.filter((node) => node.type === 'round-table');
+
+    expect(tables).toHaveLength(5);
+    expect(outcome.assignedCount).toBe(12);
+    expect(outcome.nodesUsed).toBe(5);
+    expect(tables.every((table) => table.assignedStudentIds.length > 0)).toBe(true);
+  });
+
   it('spreads Harkness groups across all chairs instead of one chair per group', () => {
     useLessonStore.getState().setClassSize(24);
     const students = classOf(24);

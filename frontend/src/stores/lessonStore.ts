@@ -398,13 +398,25 @@ export const useLessonStore = create<LessonState>()(
             );
             if (studentIds.length === 0) continue;
 
-            // Prefer one seat area that can hold the whole group; choose the
+            // Prefer one seat area that can hold the whole group. Prefer an
+            // empty area over one already holding another group (so five groups
+            // use five tables instead of stacking two on the fourth), then the
             // tightest fit so a 2-person group does not waste a 5-seat table.
             let bestFit: (typeof targets)[number] | undefined;
+            let bestFitIsEmpty = false;
             for (const node of targets) {
               const room = remaining.get(node.id) ?? 0;
               if (room < studentIds.length) continue;
-              if (!bestFit || room < (remaining.get(bestFit.id) ?? 0)) bestFit = node;
+              const isEmpty = room === node.capacity;
+              if (!bestFit) {
+                bestFit = node;
+                bestFitIsEmpty = isEmpty;
+              } else if (isEmpty && !bestFitIsEmpty) {
+                bestFit = node;
+                bestFitIsEmpty = true;
+              } else if (isEmpty === bestFitIsEmpty && room < (remaining.get(bestFit.id) ?? 0)) {
+                bestFit = node;
+              }
             }
 
             if (bestFit) {
