@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { PilotNotice } from '../components/pilot/PilotNotice';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Icon } from '../components/ui/Icons';
 import { serializeLesson } from '../domain/serialize';
@@ -137,6 +138,8 @@ export function LessonListPage() {
           </button>
         </div>
       </header>
+
+      <PilotNotice />
 
       <main className="mx-auto max-w-5xl px-5 pb-20 pt-10">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
