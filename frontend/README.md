@@ -52,7 +52,8 @@ Requires Node ≥ 20 (verified on v25.8.1) and npm.
   ticket, Learning goals, Key vocabulary, Homework, plus blank — offered from the
   lesson start screen and the lesson-flow add menu.
 - **Lesson overview**: a read-only single-page view of every segment in order, with
-  rendered text, room schematics, instructions, and annotations — plus print support.
+  rendered text, room schematics, instructions, annotations, and every student
+  assignment by seat/station (even unannotated stations) — plus print support.
 - Export/import: versioned JSON (`.leviz.json`) with lossless round-trip.
 - Light and dark themes following `prefers-color-scheme` with a manual override.
 

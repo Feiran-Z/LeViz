@@ -303,6 +303,12 @@ async function runLessonFlow(page, opts, shoot, checks) {
     overviewText.includes('Today we practise a Harkness discussion.') &&
       overviewText.includes('Harkness prompt'),
   );
+  check(
+    'overview lists station assignments for unannotated seats',
+    ['Ada Lovelace', 'Grace Hopper', 'Alan Turing', 'Katherine Johnson'].every((name) =>
+      overviewText.includes(name),
+    ),
+  );
   await shoot('13-overview');
   await page.getByRole('button', { name: 'Back to editor' }).click();
   await page.waitForTimeout(400);

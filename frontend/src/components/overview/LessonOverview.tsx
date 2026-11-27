@@ -11,7 +11,12 @@ function LayoutSection({ segment }: { segment: LayoutSegment }) {
   const students = useRosterStore((state) => state.students);
   const nodes = segment.canvas.nodes;
   const seats = nodes.reduce((sum, node) => sum + node.capacity, 0);
-  const assigned = nodes.reduce((sum, node) => sum + node.assignedStudentIds.length, 0);
+  const assignedCount = nodes.reduce((sum, node) => sum + node.assignedStudentIds.length, 0);
+  const capacityNodes = nodes.filter((node) => node.capacity > 0).length;
+  // Reading order, matching where "Apply to canvas" places groups.
+  const assignedNodes = nodes
+    .filter((node) => node.assignedStudentIds.length > 0)
+    .sort((a, b) => a.y - b.y || a.x - b.x);
   const annotated = nodes.filter(
     (node) => node.note && (node.note.title.trim() || node.note.body.trim()),
   );
@@ -31,10 +36,44 @@ function LayoutSection({ segment }: { segment: LayoutSegment }) {
         <>
           <LayoutThumbnail canvas={segment.canvas} />
           <p className="mt-1.5 text-[11px] text-secondary">
-            {nodes.length} nodes · {seats} seats · {assigned} assigned
+            {nodes.length} nodes · {seats} seats · {assignedCount} assigned
           </p>
         </>
       )}
+
+      {capacityNodes > 0 ? (
+        <div className="mt-3 border-t border-default pt-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="section-label">Student assignments</p>
+            <p className="text-[10px] tabular text-secondary">
+              {assignedCount} {assignedCount === 1 ? 'student' : 'students'} · {assignedNodes.length}{' '}
+              {assignedNodes.length === 1 ? 'seat' : 'seats'}
+            </p>
+          </div>
+          {assignedNodes.length > 0 ? (
+            <ul className="mt-1.5 overflow-hidden rounded-sm border border-default">
+              {assignedNodes.map((node) => (
+                <li
+                  key={node.id}
+                  className="flex items-start gap-3 border-b border-default bg-page px-2.5 py-1.5 last:border-b-0"
+                >
+                  <span className="w-32 shrink-0 truncate text-xs font-medium" title={node.label}>
+                    {node.label}
+                  </span>
+                  <span className="min-w-0 flex-1 text-xs leading-relaxed text-secondary">
+                    {node.assignedStudentIds.map(studentName).join(', ')}
+                  </span>
+                  <span className="shrink-0 text-[10px] tabular text-secondary">
+                    {node.assignedStudentIds.length}/{node.capacity}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-xs text-secondary">No students assigned yet.</p>
+          )}
+        </div>
+      ) : null}
 
       {annotated.length > 0 ? (
         <div className="mt-3 border-t border-default pt-3">
@@ -49,11 +88,6 @@ function LayoutSection({ segment }: { segment: LayoutSegment }) {
                 {node.note?.body ? (
                   <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-secondary">
                     {node.note.body}
-                  </p>
-                ) : null}
-                {node.assignedStudentIds.length > 0 ? (
-                  <p className="mt-1 text-[10px] text-secondary">
-                    Assigned: {node.assignedStudentIds.map(studentName).join(', ')}
                   </p>
                 ) : null}
               </li>

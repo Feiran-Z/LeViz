@@ -20,7 +20,7 @@ machine. Evidence from that run:
   activity guidelines 3).
 - `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.15 MB
   (358 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
-- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 23 checks
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 24 checks
   passed**, zero console errors, zero page errors, 16 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
