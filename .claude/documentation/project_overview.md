@@ -63,6 +63,8 @@ The teacher keeps a roster with names, optional tags (for example, "strong reade
 
 Either way, the result is a layout that knows who is where.
 
+Teachers can also save a lesson's roster — names, tags, and pairings — as a **class**, then apply that class to any lesson. Each lesson keeps its own snapshot, so old plans do not change unexpectedly; a linked lesson can refresh from the class or save its edits back. Class rosters live in the same browser as the lessons.
+
 ### Plan the text-only parts of the lesson
 
 Openings, direct instruction notes, debrief questions, and exit tickets are simple rich-text segments. They do not need a canvas. They sit in the same flow as the layout segments so the whole lesson reads as one plan.
@@ -140,10 +142,11 @@ The tool should also allow a **custom** activity — a blank canvas the teacher 
 
 These are unresolved product decisions, not technical ones. They should be settled before building the relevant feature.
 
-1. **Per-lesson roster or shared class roster?** Should a teacher re-enter student names for every lesson, or maintain one roster per class that many lessons draw from? The simpler answer is per-lesson; the more convenient answer is shared. Decide based on how teachers actually behave.
-2. **How are teacher accounts created?** Should an administrator create accounts, or should teachers sign themselves up with an invite code? The former fits a small school; the latter lowers friction.
-3. **Should department heads see others' lessons?** Strict privacy per teacher is the default. If department heads need read access for coaching or review, that is a deliberate product decision with privacy implications.
-4. **How much visual fidelity do teachers need for their room?** Is a generic grid sufficient, or do teachers want to place their layout over a photo of their actual classroom? The second is more work and may not be worth it.
+**Resolved:** per-lesson roster or shared class roster? Shared local class rosters with per-lesson snapshots; see the architecture.
+
+1. **How are teacher accounts created?** Should an administrator create accounts, or should teachers sign themselves up with an invite code? The former fits a small school; the latter lowers friction.
+2. **Should department heads see others' lessons?** Strict privacy per teacher is the default. If department heads need read access for coaching or review, that is a deliberate product decision with privacy implications.
+3. **How much visual fidelity do teachers need for their room?** Is a generic grid sufficient, or do teachers want to place their layout over a photo of their actual classroom? The second is more work and may not be worth it.
 
 ---
 

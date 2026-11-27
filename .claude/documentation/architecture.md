@@ -13,7 +13,7 @@ The system is a **layered client-side application with a document-shaped persist
 Three properties follow from this and drive every other decision:
 
 1. **The browser is the application.** Grouping algorithms, undo/redo, serialization, and constraint validation all run client-side. The network is only consulted to save and load whole lesson documents.
-2. **The lesson is a single aggregate.** A `Lesson` — with its meta, roster, and ordered segments — is read and written as one unit. There are no partial-update endpoints, no field-level PATCH calls, no server-side merging.
+2. **The lesson is a single aggregate.** A `Lesson` — with its meta, roster, and ordered segments — is read and written as one unit. There are no partial-update endpoints, no field-level PATCH calls, no server-side merging. Reusable class rosters are a **separate local aggregate**: a lesson stores a `classId` link and its own roster snapshot, so the lesson document remains complete and exportable.
 3. **Persistence is an interface, not a location.** The app runs identically against IndexedDB (Phase 1) and PocketBase (Phase 2). Only one module knows which is active.
 
 ---
@@ -60,17 +60,17 @@ The frontend is organized into four horizontal layers with a strict one-directio
 │ reads/writes via hooks
 ┌───────────────────────────────▼──────────────────────────────┐
 │ L3 — Application State                                       │
-│ Zustand stores: lessonStore, rosterStore, uiStore, authStore │
+│ Zustand: lessonStore, rosterStore, classRosterStore, uiStore │
 └───────────────────────────────┬──────────────────────────────┘
 │ calls
 ┌───────────────────────────────▼──────────────────────────────┐
 │ L2 — Persistence                                             │
-│ LessonRepository implementations: IndexedDB | PocketBase     │
+│ LessonRepository + ClassRosterRepository (IndexedDB now)      │
 └───────────────────────────────┬──────────────────────────────┘
 │ serializes/deserializes
 ┌───────────────────────────────▼──────────────────────────────┐
 │ L1 — Domain                                                  │
-│ Pure types + logic: Lesson, Segment, CanvasNode, grouping    │
+│ Pure types + logic: Lesson, Segment, CanvasNode, classes     │
 └──────────────────────────────────────────────────────────────┘
 
 
@@ -96,10 +96,11 @@ Pure TypeScript. The canonical data model and the algorithms that operate on it.
 
 | Module | Responsibility |
 |---|---|
-| `types.ts` | `Lesson`, `LessonMeta`, `Student`, `Segment` union, `CanvasState`, `CanvasNode`, `NodeNote`, `ActivityType`. The single source of truth for the document shape. |
+| `types.ts` | `Lesson`, `LessonMeta`, `Student`, `ClassRoster`, `Segment` union, `CanvasState`, `CanvasNode`, `NodeNote`, `ActivityType`. The single source of truth for the document and class shapes. |
+| `classRoster.ts` | `createClassRoster` (cloned snapshots), `pruneAssignmentsToRoster`, `countRemovedAssignments`. Pure helpers for adopting or refreshing a class. |
 | `grouping.ts` | `generateGroups` (random, constraint-aware) and `validateAssignment`. Deterministic, side-effect free, fully unit-tested. |
 | `templates/` | Static JSON templates for the seven activity types. Applying a template is a pure merge function. |
-| `serialize.ts` | Lossless round-trip helpers. Guarantees `parse(stringify(lesson))` equals the original. |
+| `serialize.ts` | Lossless round-trip helpers. Guarantees `parse(stringify(lesson))` equals the original; normalizes a missing `classId` to null. |
 
 The domain layer knows nothing about where a lesson is stored, how it is displayed, or what framework renders it.
 
@@ -115,30 +116,38 @@ interface LessonRepository {
   saveLesson(lesson: Lesson): Promise<Lesson>;
   deleteLesson(id: string): Promise<void>;
 }
+
+interface ClassRosterRepository {
+  listClasses(): Promise<ClassRoster[]>;
+  getClass(id: string): Promise<ClassRoster | null>;
+  saveClass(classRoster: ClassRoster): Promise<ClassRoster>;
+  deleteClass(id: string): Promise<void>;
+}
 ```
 
 | Module | Responsibility |
 |---|---|
-| `indexeddb/` | | Phase 1 implementation. One object store keyed by lesson id, indexed by updatedAt. |
-| `pocketbase/` | Phase 2 implementation. Maps Lesson ↔ PocketBase record (created/updated → createdAt/updatedAt). |
-| `index.ts` | Factory. Selects the implementation based on `VITE_POCKETBASE_URL`. Nothing else in the app branches on backend choice. |
+| `indexeddb/` | Phase 1 implementation. A `lessons` store keyed by lesson id (indexed by `updatedAt`) and a `classes` store keyed by class id (indexed by `name`) in one DB, version 2. |
+| `pocketbase/` | Phase 2 implementation. Maps Lesson and ClassRoster records (created/updated → createdAt/updatedAt). |
+| `index.ts` | Factory. Selects both implementations based on `VITE_POCKETBASE_URL`. Nothing else in the app branches on backend choice. |
 
 **Parity requirement**: both implementations must pass the same test suite. The interface is the contract; a repository that cannot satisfy it is not a valid implementation.
 
 ### 4.3 L3 — Application State (src/stores/)
 
-Four Zustand stores with explicit, non-overlapping responsibilities.
+Zustand stores with explicit, non-overlapping responsibilities.
 
 | Store | Owns | Undo history | Persisted? |
 |---|---|---|---|
-| `lessonStore` | The active `Lesson` document: meta, segments, canvas nodes, node notes | Yes (zundo, limit 50) | On debounced save |
-| `rosterStore` | Students, tags, constraints | Yes (zundo, limit 50) | As part of `Lesson.roster` |
+| `lessonStore` | The active `Lesson` document: meta, class link, segments, canvas nodes, node notes | Yes (zundo, limit 50); class-link changes are deliberate and excluded | On debounced save |
+| `rosterStore` | The active lesson's students, tags, constraints | Yes (zundo, limit 50) | As part of `Lesson.roster` (snapshot) |
+| `classRosterStore` | Reusable class library: names, students, tags, constraints | No | Immediately via `ClassRosterRepository` |
 | `uiStore` | Active segment id, selected node id, active panel tab, canvas zoom/pan | No | No |
 | `authStore` | Auth record and session state | No | Session token only |
 
 **State ownership rules**:
 - A piece of state has exactly one owning store. No duplication across stores.
-- Cross-store reads are allowed; cross-store writes are not. A store may read `rosterStore` students to validate an assignment, but only `rosterStore` mutates the roster.
+- Cross-store reads are allowed; cross-store writes are not. A store may read `rosterStore` students to validate an assignment, but only `rosterStore` mutates the roster. `classSession` is the orchestration module for adopting or refreshing a class across `classRosterStore`, `rosterStore`, and `lessonStore`.
 - Derived values (e.g., the time budget total) are computed via selectors, never stored.
 - `uiStore` never enters undo history. Undoing a layout change must not revert which panel was open.
 
@@ -285,17 +294,17 @@ Same topology with PocketBase packaged in an `alpine` image and `pb_data` mounte
 These must hold at all times. A change that violates one requires an explicit architecture revision, not a workaround.
 
 1. The frontend builds to static files with no server-side rendering or runtime Node dependency.
-2. All persistence passes through `LessonRepository`. No component or store imports `idb` or `pocketbase`.
+2. All persistence passes through `LessonRepository` or `ClassRosterRepository`. No component or store imports `idb` or `pocketbase`.
 3. `domain/` has no imports from any other layer or external SDK.
-4. A lesson is saved and loaded as a complete document. No partial-field updates.
+4. A lesson is saved and loaded as a complete document. No partial-field updates. A class is a separate aggregate; the lesson keeps a `classId` link and its own roster snapshot.
 5. Shared state lives in exactly one Zustand store per concern. No duplicated state.
 6. `uiStore` state never enters undo history.
 7. TipTap JSON exists only in `TextSegment.content`. Node notes are plain text.
-8. The document serializes losslessly: `parse(stringify(lesson))` equals `lesson`.
+8. The lesson serializes losslessly: `parse(stringify(lesson))` equals `lesson`; a missing `classId` normalizes to null.
 9. Authorization is enforced by PocketBase API rules, never by client-side checks alone.
 10. PocketBase schema changes exist only as migrations in git.
-11. The backend contains no domain logic and never inspects `segments` or `roster` structure.
-12. Every repository implementation passes the same shared contract test suite.
+11. The backend contains no domain logic and never inspects `segments`, `roster`, or class student structure.
+12. Every repository implementation passes its shared contract test suite.
 
 ## 11. Known Trade-offs
 

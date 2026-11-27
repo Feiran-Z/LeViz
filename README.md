@@ -15,6 +15,8 @@ in one document.
 - **Back up with Export.** Clearing site data, using a private window, or switching
   browsers means the lessons are gone unless you exported them first. Import
   restores them.
+- **Class rosters are local too.** A lesson export carries that lesson's roster
+  snapshot but not the class library. Class library backup/export is a follow-up.
 - **Desktop and laptop first.** The editor is usable on a tablet; phone layout is
   out of scope.
 - The site is public. Use fictional student names in any demo lessons.
@@ -52,10 +54,10 @@ Project documentation lives in `.claude/documentation/`.
 
 ```
 frontend/        Vite + React 19 + TypeScript SPA
-  src/domain/    pure lesson model, serialization, grouping, engagement
-  src/stores/    Zustand state
+  src/domain/    pure lesson/class-roster model, serialization, grouping, engagement
+  src/stores/    Zustand state and class session use cases
   src/canvas/    Konva classroom canvas
-  src/components/segments, panels, overview, engagement, pilot
+  src/components/segments, panels, overview, classes, engagement, pilot
 .github/         Pages deployment workflow
 docs/            deployment and planning notes
 ```
