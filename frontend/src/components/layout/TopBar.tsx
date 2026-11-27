@@ -197,6 +197,15 @@ export function TopBar({ onRequestDelete }: { onRequestDelete: () => void }) {
             <Icon name="redo" size={15} />
           </button>
           <span className="mx-1 h-5 w-px bg-strong" aria-hidden="true" />
+          <Link
+            to={`/lessons/${lesson.id}/teach`}
+            className="btn btn-secondary btn-sm px-2"
+            title="Teach this lesson"
+            aria-label="Teach this lesson"
+          >
+            <Icon name="play" size={14} />
+            <span className="hidden lg:inline">Teach</span>
+          </Link>
           <button
             type="button"
             className={`btn btn-sm px-2 ${viewMode === 'overview' ? 'btn-primary' : 'btn-secondary'}`}

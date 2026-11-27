@@ -627,10 +627,45 @@ async function runTeachFlow(page, opts, shoot, checks) {
   await secondDuration.press('Enter');
   await page.waitForTimeout(300);
 
+  await page.getByRole('button', { name: 'Add layout segment' }).first().click();
+  await page.getByRole('button', { name: /Station rotation/ }).first().click();
+  await page.waitForTimeout(700);
+  await page.getByRole('tab', { name: 'Roster' }).click();
+  for (let index = 1; index <= 8; index += 1) {
+    const input = page.getByLabel('Add a student by name');
+    await input.fill(`Student ${index}`);
+    await input.press('Enter');
+    await page.waitForTimeout(60);
+  }
+  await page.getByRole('tab', { name: 'Groups' }).click();
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: 'Generate' }).click();
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: 'Apply to canvas' }).click();
+  await page.waitForTimeout(500);
+  check(
+    'station rotation groups are applied',
+    /Placed 8 students across 4 seats/.test(await page.locator('body').innerText()),
+  );
+
+  await page.getByRole('button', { name: 'Add layout segment' }).first().click();
+  await page.getByRole('button', { name: /Gallery walk/ }).first().click();
+  await page.waitForTimeout(700);
+  await resetCanvasView(page);
+  const galleryStop = await canvasPoint(page, 205, 66);
+  await page.mouse.dblclick(galleryStop.x, galleryStop.y);
+  await page.waitForTimeout(400);
+  await page.getByLabel('Title', { exact: true }).fill('Stop A prompt');
+  await page.getByLabel('Body', { exact: true }).fill('What do you notice?');
+  await page.getByRole('button', { name: 'Save note' }).click();
+  await page.waitForTimeout(500);
+
   const lessonId = new URL(page.url()).hash.match(/lessons\/([^/?#]+)/)?.[1];
   check('lesson created for teach', Boolean(lessonId), page.url());
-  const base = page.url().split('#')[0];
-  await page.goto(`${base}#/lessons/${lessonId}/teach`, { waitUntil: 'load' });
+  await page.getByRole('link', { name: 'Back to all lessons' }).click();
+  await page.getByRole('button', { name: 'New lesson' }).first().waitFor({ timeout: 10000 });
+  await page.getByRole('link', { name: /^Teach / }).first().click();
+  await page.waitForURL(/\/teach/);
   await page.waitForTimeout(800);
 
   const timer = page.getByRole('timer');
@@ -665,10 +700,10 @@ async function runTeachFlow(page, opts, shoot, checks) {
   check('time-up does not auto-advance', (await page.locator('body').innerText()).includes('Do Now'));
   await shoot('02-time-up');
 
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
   await page.waitForTimeout(200);
   check('next advances to the debrief', (await timerText()).includes('05:00') && (await page.locator('body').innerText()).includes('Debrief'), await timerText());
-  await page.getByRole('button', { name: 'Previous' }).click();
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
   await page.waitForTimeout(200);
   check('previous returns to the do now', (await page.locator('body').innerText()).includes('Do Now'));
 
@@ -688,10 +723,64 @@ async function runTeachFlow(page, opts, shoot, checks) {
   );
   await shoot('03-reloaded');
 
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.waitForTimeout(200);
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.waitForTimeout(300);
+  const stationBody = await page.locator('body').innerText();
+  check(
+    'station rotation timer is shown',
+    (await timerText()).includes('15:00') && stationBody.includes('Station 1 of 4'),
+    stationBody,
+  );
+  check('station groups are shown in the cards', stationBody.includes('Group: Student'), stationBody);
+  await page.getByRole('button', { name: 'Next station' }).click();
+  await page.waitForTimeout(200);
+  check('next station advances the guide', (await page.locator('body').innerText()).includes('Station 2 of 4'));
+  await page.getByRole('button', { name: 'Rotation guide' }).click();
+  await page.waitForTimeout(200);
+  check('rotation guide can be turned off', !(await page.locator('body').innerText()).includes('Station 2 of 4'));
+  await page.getByRole('button', { name: 'Rotation guide' }).click();
+  await page.waitForTimeout(200);
+  check('rotation guide can be turned back on', (await page.locator('body').innerText()).includes('Station 1 of 4'));
+  await shoot('04-station-rotation');
+
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.waitForTimeout(300);
+  const galleryBody = await page.locator('body').innerText();
+  check(
+    'gallery walk guide is shown',
+    galleryBody.includes('Stop 1 of 6') && galleryBody.includes('Stop A prompt'),
+    galleryBody,
+  );
+  await page.getByRole('button', { name: 'Next stop' }).click();
+  await page.waitForTimeout(200);
+  check('next stop advances the gallery guide', (await page.locator('body').innerText()).includes('Stop 2 of 6'));
+  await shoot('05-gallery-walk');
+
   await page.getByRole('button', { name: /Exit/ }).click();
   await page.waitForURL(/\/lessons\/[^/]+$/);
   await page.waitForTimeout(900);
   check('exit returns to the editor', (await page.getByRole('tab', { name: 'Roster' }).count()) > 0);
+
+  await page.getByRole('link', { name: 'Teach this lesson' }).click();
+  await page.waitForURL(/\/teach/);
+  await page.waitForTimeout(700);
+  check('editor opens teach mode', /\/teach/.test(page.url()));
+  await page.getByRole('button', { name: /Exit/ }).click();
+  await page.waitForURL(/\/lessons\/[^/]+$/);
+  await page.waitForTimeout(700);
+
+  await page.getByRole('button', { name: 'Open lesson overview' }).click();
+  await page.waitForTimeout(700);
+  await page.getByRole('link', { name: 'Teach', exact: true }).click();
+  await page.waitForURL(/\/teach/);
+  await page.waitForTimeout(700);
+  check('overview opens teach mode', /\/teach/.test(page.url()));
+  await page.getByRole('button', { name: /Exit/ }).click();
+  await page.waitForURL(/\/lessons\/[^/]+$/);
+  await page.waitForTimeout(700);
+  check('teach links return to the editor', (await page.getByRole('tab', { name: 'Roster' }).count()) > 0);
 }
 
 async function main() {

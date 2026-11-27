@@ -225,25 +225,36 @@ export function LessonListPage() {
                       >
                         {summary.title || 'Untitled lesson'}
                       </Link>
-                      <div className="flex shrink-0 items-center opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
-                        <button
-                          type="button"
-                          className="icon-btn"
-                          title="Export lesson"
-                          aria-label={`Export ${summary.title}`}
-                          onClick={() => void handleExport(summary)}
+                      <div className="flex shrink-0 items-center gap-0.5">
+                        <Link
+                          to={`/lessons/${summary.id}/teach`}
+                          className="btn btn-secondary btn-sm px-2"
+                          aria-label={`Teach ${summary.title || 'Untitled lesson'}`}
+                          title="Teach this lesson"
                         >
-                          <Icon name="download" size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          className="icon-btn hover:text-danger"
-                          title="Delete lesson"
-                          aria-label={`Delete ${summary.title}`}
-                          onClick={() => setPendingDelete(summary)}
-                        >
-                          <Icon name="trash" size={14} />
-                        </button>
+                          <Icon name="play" size={13} />
+                          <span className="hidden sm:inline">Teach</span>
+                        </Link>
+                        <div className="flex items-center opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                          <button
+                            type="button"
+                            className="icon-btn"
+                            title="Export lesson"
+                            aria-label={`Export ${summary.title}`}
+                            onClick={() => void handleExport(summary)}
+                          >
+                            <Icon name="download" size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="icon-btn hover:text-danger"
+                            title="Delete lesson"
+                            aria-label={`Delete ${summary.title}`}
+                            onClick={() => setPendingDelete(summary)}
+                          >
+                            <Icon name="trash" size={14} />
+                          </button>
+                        </div>
                       </div>
                     </div>
 

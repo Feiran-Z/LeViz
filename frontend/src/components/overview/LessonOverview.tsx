@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import {
   nodeOverridesEngagement,
   resolveNodeEngagement,
@@ -170,6 +171,10 @@ export function LessonOverview() {
             </p>
           </div>
           <div className="flex gap-2 print:hidden">
+            <Link to={`/lessons/${lesson.id}/teach`} className="btn btn-secondary btn-sm">
+              <Icon name="play" size={14} />
+              Teach
+            </Link>
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setViewMode('edit')}>
               <Icon name="pencil" size={14} />
               Back to editor
