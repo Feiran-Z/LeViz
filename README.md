@@ -18,6 +18,8 @@ in one document.
 - **Desktop and laptop first.** The editor is usable on a tablet; phone layout is
   out of scope.
 - The site is public. Use fictional student names in any demo lessons.
+- Search engines are asked not to index this preview (a `noindex` meta tag);
+  the URL is still reachable by anyone who has it.
 - **Feedback:** the in-app preview banner will link to a short form once it is
   ready. Until then, open an issue on this repository.
 - The short commit id in the preview banner names the deployed build; include it
