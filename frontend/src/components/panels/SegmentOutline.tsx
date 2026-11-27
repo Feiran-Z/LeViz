@@ -53,19 +53,24 @@ function SortableSegment({
       >
         <button
           type="button"
-          className="flex h-7 w-5 shrink-0 cursor-grab items-center justify-center rounded-sm text-placeholder hover:text-secondary active:cursor-grabbing"
+          className={`flex h-7 w-6 shrink-0 cursor-grab items-center justify-center rounded-sm border transition-colors active:cursor-grabbing ${
+            active
+              ? 'border-default bg-surface text-secondary hover:text-primary'
+              : 'border-default bg-page text-secondary hover:border-strong hover:bg-surface hover:text-primary'
+          }`}
+          title="Drag to reorder"
           aria-label={`Reorder ${segment.title}`}
           {...attributes}
           {...listeners}
         >
-          <Icon name="grip" size={13} />
+          <Icon name="grip" size={15} strokeWidth={2.2} />
         </button>
         <button type="button" className="min-w-0 flex-1 text-left" onClick={onSelect}>
           <span className="flex items-center gap-1.5">
             <Icon
               name={segment.kind === 'text' ? 'text' : 'layout'}
               size={13}
-              className={active ? 'text-accent' : 'text-secondary'}
+              className={`shrink-0 ${active ? 'text-accent' : 'text-secondary'}`}
             />
             <span className={`truncate text-[13px] ${active ? 'font-medium text-primary' : 'text-primary'}`}>
               {segment.title || 'Untitled segment'}
