@@ -25,7 +25,8 @@ import { chromium } from 'playwright';
 function usage() {
   return `Usage: node driver.mjs [options]
 
-  --flow load|lesson    Smoke flow to run (default: load)
+  --flow load|lesson|classes|teach|print
+                        Smoke flow to run (default: load)
   --url URL             Page to open (default: http://localhost:5173)
   --out DIR             Screenshot directory (default: screenshots)
   --headed              Show a real window instead of headless
@@ -59,8 +60,8 @@ function parseArgs(argv) {
       process.exit(2);
     }
   }
-  if (!['load', 'lesson', 'classes', 'teach'].includes(opts.flow)) {
-    console.error(`--flow must be "load", "lesson", "classes", or "teach"`);
+  if (!['load', 'lesson', 'classes', 'teach', 'print'].includes(opts.flow)) {
+    console.error(`--flow must be "load", "lesson", "classes", "teach", or "print"`);
     process.exit(2);
   }
   if (!Number.isFinite(opts.timeout) || opts.timeout <= 0) {
@@ -817,6 +818,114 @@ async function runTeachFlow(page, opts, shoot, checks) {
   check('teach links return to the editor', (await page.getByRole('tab', { name: 'Roster' }).count()) > 0);
 }
 
+async function runPrintFlow(page, opts, shoot, checks) {
+  const check = (name, condition, detail) => {
+    checks.push({ name, ok: Boolean(condition), ...(detail ? { detail } : {}) });
+    if (!condition) throw new Error(`Check failed: ${name}${detail ? ` (${detail})` : ''}`);
+  };
+
+  await page.addInitScript(() => {
+    window.__levizPrintCalls = 0;
+    window.print = () => { window.__levizPrintCalls += 1; };
+  });
+  await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
+  await page.getByRole('button', { name: 'New lesson' }).first().click();
+  await page.waitForURL(/\/lessons\//);
+  await page.waitForTimeout(700);
+
+  await page.getByRole('button', { name: 'Add layout segment' }).first().click();
+  await page.getByRole('button', { name: /Station rotation/ }).first().click();
+  await page.waitForTimeout(700);
+
+  await page.getByRole('tab', { name: 'Roster' }).click();
+  for (let index = 1; index <= 8; index += 1) {
+    const input = page.getByLabel('Add a student by name');
+    await input.fill(`Student ${index}`);
+    await input.press('Enter');
+    await page.waitForTimeout(60);
+  }
+  await page.getByRole('tab', { name: 'Groups' }).click();
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: 'Generate' }).click();
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: 'Apply to canvas' }).click();
+  await page.waitForTimeout(600);
+  check(
+    'station rotation groups are applied',
+    /Placed 8 students across 4 seats/.test(await page.locator('body').innerText()),
+  );
+
+  await resetCanvasView(page);
+  const station1 = await canvasPoint(page, 215, 145);
+  await page.mouse.dblclick(station1.x, station1.y);
+  await page.waitForTimeout(500);
+  await page.getByLabel('Title', { exact: true }).fill('Station 1 prompt');
+  await page
+    .getByLabel('Body', { exact: true })
+    .fill('Discuss the opening question with your group.\n\nChoose one sentence to share.');
+  await page.getByRole('button', { name: 'Save note' }).click();
+  await page.waitForTimeout(500);
+
+  await page.getByRole('link', { name: 'Print materials' }).click();
+  await page.waitForURL(/\/print\//, { timeout: 10000 });
+  await page.waitForTimeout(700);
+  const printBody = await page.locator('body').innerText();
+  check('print route opens', /\/print\//.test(page.url()), page.url());
+  check(
+    'seating sheet is included',
+    printBody.toLowerCase().includes('seating sheet') &&
+      printBody.includes('Seats and assignments'),
+  );
+  check(
+    'station card shows the prompt',
+    printBody.includes('Station 1 prompt') && printBody.includes('Choose one sentence to share.'),
+  );
+  check('station card shows the group', /Group: Student \d/.test(printBody));
+  check(
+    'station card shows engagement',
+    printBody.includes('Cognitive') && printBody.includes('Medium'),
+  );
+  check(
+    'one card per station',
+    (await page.locator('.print-card').count()) === 4,
+    String(await page.locator('.print-card').count()),
+  );
+  check(
+    'print page has no editor chrome',
+    (await page.getByRole('tab', { name: 'Roster' }).count()) === 0,
+  );
+  check(
+    'Print button is present',
+    (await page.getByRole('button', { name: 'Print', exact: true }).count()) === 1,
+  );
+  await shoot('01-print-preview');
+
+  await page.emulateMedia({ media: 'print' });
+  check('screen toolbar is hidden in print', !(await page.locator('.print-toolbar').isVisible()));
+  await shoot('02-print-media');
+  await page.emulateMedia({ media: 'screen' });
+
+  await page.getByRole('button', { name: 'Print', exact: true }).click();
+  await page.waitForTimeout(200);
+  const printCalls = await page.evaluate(() => window.__levizPrintCalls);
+  check('Print calls window.print', printCalls === 1, String(printCalls));
+
+  await page.getByRole('link', { name: 'Back to editor' }).click();
+  await page.waitForURL(/\/lessons\/[^/]+$/, { timeout: 10000 });
+  await page.waitForTimeout(700);
+  await page.getByRole('button', { name: 'Open lesson overview' }).click();
+  await page.waitForTimeout(700);
+  await page.getByRole('link', { name: 'Print materials' }).first().click();
+  await page.waitForURL(/\/print\//, { timeout: 10000 });
+  await page.waitForTimeout(700);
+  check(
+    'overview opens print materials',
+    /\/print\//.test(page.url()) &&
+      (await page.locator('body').innerText()).toLowerCase().includes('seating sheet'),
+  );
+  await shoot('03-overview-entry');
+}
+
 async function main() {
   const opts = parseArgs(process.argv);
   await mkdir(opts.out, { recursive: true });
@@ -848,6 +957,7 @@ async function main() {
     if (opts.flow === 'lesson') await runLessonFlow(page, opts, shoot, checks);
     else if (opts.flow === 'classes') await runClassesFlow(page, opts, shoot, checks);
     else if (opts.flow === 'teach') await runTeachFlow(page, opts, shoot, checks);
+    else if (opts.flow === 'print') await runPrintFlow(page, opts, shoot, checks);
     else await runLoadFlow(page, opts, shoot);
 
     const title = await page.title();

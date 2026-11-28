@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { activityGuidelines } from '../../domain/activityGuidelines';
 import { ACTIVITY_TYPES, ACTIVITY_LABELS, type ActivityType, type LayoutSegment } from '../../domain/types';
 import { CanvasEditor } from '../../canvas/CanvasEditor';
@@ -10,6 +11,7 @@ import { SegmentHeader } from './SegmentHeader';
 
 export function LayoutSegmentEditor({ segment }: { segment: LayoutSegment }) {
   const updateSegment = useLessonStore((state) => state.updateSegment);
+  const lessonId = useLessonStore((state) => state.lesson?.id ?? null);
   const [instructionsOpen, setInstructionsOpen] = useState(false);
   const [instructions, setInstructions] = useState(segment.instructions);
   const instructionsRef = useRef(instructions);
@@ -84,23 +86,35 @@ export function LayoutSegmentEditor({ segment }: { segment: LayoutSegment }) {
           {segment.canvas.nodes.reduce((sum, node) => sum + node.assignedStudentIds.length, 0)} assigned
         </span>
 
-        <button
-          type="button"
-          className={`btn btn-ghost btn-sm ml-auto ${instructionsOpen ? 'btn-active' : ''}`}
-          onClick={() => setInstructionsOpen((open) => !open)}
-          aria-expanded={instructionsOpen}
-          title={
-            instructions.trim()
-              ? 'Activity instructions (sample guidelines included)'
-              : 'Add activity instructions'
-          }
-        >
-          <Icon name="text" size={13} />
-          Activity instructions
-          {instructions.trim() ? (
-            <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+        <div className="ml-auto flex items-center gap-1">
+          {lessonId ? (
+            <Link
+              to={`/lessons/${lessonId}/print/${segment.id}`}
+              className="btn btn-ghost btn-sm"
+              title="Print station and role cards, plus a seating sheet"
+            >
+              <Icon name="printer" size={13} />
+              Print materials
+            </Link>
           ) : null}
-        </button>
+          <button
+            type="button"
+            className={`btn btn-ghost btn-sm ${instructionsOpen ? 'btn-active' : ''}`}
+            onClick={() => setInstructionsOpen((open) => !open)}
+            aria-expanded={instructionsOpen}
+            title={
+              instructions.trim()
+                ? 'Activity instructions (sample guidelines included)'
+                : 'Add activity instructions'
+            }
+          >
+            <Icon name="text" size={13} />
+            Activity instructions
+            {instructions.trim() ? (
+              <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+            ) : null}
+          </button>
+        </div>
       </div>
 
       {instructionsOpen && (

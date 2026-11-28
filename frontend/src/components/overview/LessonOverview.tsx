@@ -16,7 +16,7 @@ import { EngagementTimelineChart } from './EngagementTimelineChart';
 import { LayoutThumbnail } from './LayoutThumbnail';
 import { RichTextView } from './RichTextView';
 
-function LayoutSection({ segment }: { segment: LayoutSegment }) {
+function LayoutSection({ segment, lessonId }: { segment: LayoutSegment; lessonId: string }) {
   const students = useRosterStore((state) => state.students);
   const nodes = segment.canvas.nodes;
   const seats = nodes.reduce((sum, node) => sum + node.capacity, 0);
@@ -38,6 +38,17 @@ function LayoutSection({ segment }: { segment: LayoutSegment }) {
 
   return (
     <div>
+      <div className="mb-2 flex justify-end print:hidden">
+        <Link
+          to={`/lessons/${lessonId}/print/${segment.id}`}
+          className="btn btn-ghost btn-sm"
+          title="Print station and role cards, plus a seating sheet"
+        >
+          <Icon name="printer" size={13} />
+          Print materials
+        </Link>
+      </div>
+
       {segment.instructions.trim() ? (
         <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-secondary">
           {segment.instructions}
@@ -259,7 +270,7 @@ export function LessonOverview() {
                   {segment.kind === 'text' ? (
                     <RichTextView doc={segment.content} />
                   ) : (
-                    <LayoutSection segment={segment} />
+                    <LayoutSection segment={segment} lessonId={lesson.id} />
                   )}
                 </div>
               </li>

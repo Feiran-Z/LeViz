@@ -5,6 +5,7 @@ import { useThemeEffect } from './hooks/useTheme';
 import { EditorPage } from './pages/EditorPage';
 import { LessonListPage } from './pages/LessonListPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { PrintMaterialsPage } from './pages/PrintMaterialsPage';
 import { TeachPage } from './pages/TeachPage';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
     <>
       <Routes>
         <Route path="/" element={<LessonListPage />} />
+        <Route path="/lessons/:lessonId/print/:segmentId" element={<PrintMaterialsPage />} />
         <Route path="/lessons/:lessonId/teach" element={<TeachPage />} />
         <Route path="/lessons/:lessonId" element={<EditorPage />} />
         <Route path="*" element={<NotFoundPage />} />
