@@ -143,6 +143,14 @@ async function canvasPoint(page, x, y) {
   return { x: map.left + map.offsetX + x * map.scale, y: map.top + map.offsetY + y * map.scale };
 }
 
+async function dismissPreviewGate(page) {
+  const button = page.getByRole('button', { name: 'I understand.', exact: true });
+  if ((await button.count()) > 0) {
+    await button.click();
+    await page.waitForTimeout(250);
+  }
+}
+
 async function runLoadFlow(page, opts, shoot) {
   await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
   await page.waitForTimeout(750);
@@ -157,6 +165,29 @@ async function runLessonFlow(page, opts, shoot, checks) {
   };
 
   await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
+
+  const gateButton = page.getByRole('button', { name: 'I understand.', exact: true });
+  check(
+    'preview gate opens on the landing page',
+    (await gateButton.count()) === 1 && (await gateButton.isVisible()),
+  );
+  const gateLink = page.getByRole('link', { name: 'https://forms.cloud.microsoft/r/F1JdNhsbBh' });
+  check(
+    'preview gate links to the feedback form',
+    (await gateLink.getAttribute('href')) === 'https://forms.cloud.microsoft/r/F1JdNhsbBh',
+  );
+  await shoot('00-preview-gate');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
+  check('preview gate ignores Escape', await gateButton.isVisible());
+  await page
+    .locator('[data-testid="preview-gate-backdrop"]')
+    .click({ position: { x: 8, y: 8 } });
+  await page.waitForTimeout(150);
+  check('preview gate ignores backdrop clicks', await gateButton.isVisible());
+  await gateButton.click();
+  await page.waitForTimeout(250);
+  check('preview gate closes after acknowledgment', (await gateButton.count()) === 0);
 
   // The list is only visible before the editor opens; check its footer here.
   const footer = page.locator('footer').first();
@@ -426,6 +457,7 @@ async function runClassesFlow(page, opts, shoot, checks) {
   };
 
   await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
+  await dismissPreviewGate(page);
   await page.getByRole('button', { name: 'New lesson' }).first().click();
   await page.waitForURL(/\/lessons\//);
   await page.waitForTimeout(700);
@@ -608,6 +640,7 @@ async function runTeachFlow(page, opts, shoot, checks) {
 
   await page.clock.install({ time: new Date('2026-11-28T09:00:00') });
   await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
+  await dismissPreviewGate(page);
   await page.getByRole('button', { name: 'New lesson' }).first().click();
   await page.waitForURL(/\/lessons\//);
   await page.waitForTimeout(700);
@@ -829,6 +862,7 @@ async function runPrintFlow(page, opts, shoot, checks) {
     window.print = () => { window.__levizPrintCalls += 1; };
   });
   await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
+  await dismissPreviewGate(page);
   await page.getByRole('button', { name: 'New lesson' }).first().click();
   await page.waitForURL(/\/lessons\//);
   await page.waitForTimeout(700);

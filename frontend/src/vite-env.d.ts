@@ -2,4 +2,5 @@
 
 interface ImportMetaEnv {
   readonly VITE_BUILD_ID?: string;
+  readonly VITE_PREVIEW_GATE?: string;
 }

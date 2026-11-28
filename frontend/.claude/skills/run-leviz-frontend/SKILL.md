@@ -20,8 +20,8 @@ machine. Evidence from that run:
   materials builder.
 - `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.24 MB
   (382 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
-- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 32 checks
-  passed**, zero console errors, zero page errors, 16 non-blank screenshots.
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 37 checks
+  passed**, zero console errors, zero page errors, 17 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow classes` → **all 14 checks
   passed**, zero console errors, zero page errors, 4 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow teach` → **all 31 checks
@@ -36,7 +36,9 @@ checks the prefilled Harkness activity guidance, applies groups, adds a text seg
 the template menu, reloads to prove persistence, then exports and
 re-imports the JSON. It also checks the copyright/license footer on the lesson list
 (including the served third-party notices file) and the overview, verifies the footer
-prints, and asserts the editor has no footer.
+prints, and asserts the editor has no footer. It also verifies the landing preview gate:
+the feedback-form link, that Escape and backdrop clicks do not dismiss it, and that
+“I understand.” does.
 
 The `classes` flow creates a tagged and paired roster, saves it as a class, then seats a
 legacy student in a new lesson and applies the class — asserting the confirmation names
@@ -165,6 +167,9 @@ fired. **Open the screenshots** — a blank PNG is a failure even when exit code
   changes belong in the driver too.
 - Each run uses a fresh browser context, so IndexedDB starts empty and the run does
   not pollute other data.
+- The lesson flow checks and dismisses the landing preview gate; classes/teach/print
+  call `dismissPreviewGate` before their first action. Acknowledgment is session-scoped,
+  so internal returns to the lesson list do not re-block.
 
 ### What the print flow assumes
 

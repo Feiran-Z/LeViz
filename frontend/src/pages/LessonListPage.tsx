@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ClassesDialog } from '../components/classes/ClassesDialog';
 import { AppFooter } from '../components/layout/AppFooter';
 import { PilotNotice } from '../components/pilot/PilotNotice';
+import { PreviewBuildGate } from '../components/pilot/PreviewBuildGate';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Icon } from '../components/ui/Icons';
 import { serializeLesson } from '../domain/serialize';
@@ -152,6 +153,7 @@ export function LessonListPage() {
       </header>
 
       <PilotNotice />
+      <PreviewBuildGate />
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-20 pt-10">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">

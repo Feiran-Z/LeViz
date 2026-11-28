@@ -55,6 +55,9 @@ npm run preview    # serve the production build at http://localhost:4173/LeViz/
 Routing uses `HashRouter` because GitHub Pages has no SPA rewrites; shared lesson
 links look like `/#/lessons/<id>`.
 
+The landing page preview gate is enabled by default and remembers acknowledgment
+for the browser tab session. Set `VITE_PREVIEW_GATE=false` to build without it.
+
 ## Deployment
 
 Pushing to `main` runs `.github/workflows/deploy-pages.yml`: it installs, tests,
