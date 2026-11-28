@@ -26,7 +26,7 @@ machine. Evidence from that run:
   passed**, zero console errors, zero page errors, 4 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow teach` → **all 31 checks
   passed**, zero console errors, zero page errors, 5 non-blank screenshots.
-- `node .claude/skills/run-leviz-frontend/driver.mjs --flow print` → **all 13 checks
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow print` → **all 14 checks
   passed**, zero console errors, zero page errors, 3 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
@@ -54,10 +54,10 @@ entries.
 
 The `print` flow builds a station-rotation layout with groups and a station prompt, then
 opens Print materials from the layout toolbar. It checks the print route, the seating
-sheet and assignment table, the station prompt/group/engagement, one card per station,
-the absence of editor chrome, the screen toolbar hidden under print media, that the
-seating sheet fits one printed page, that the Print button calls `window.print`, and the
-overview's Print materials entry.
+sheet and assignment table, the station prompt/group, that the card is student-facing,
+sheet engagement, one card per station, the absence of editor chrome, the screen toolbar
+hidden under print media, that the seating sheet fits one printed page, that the Print
+button calls `window.print`, and the overview's Print materials entry.
 
 ## Prerequisites
 

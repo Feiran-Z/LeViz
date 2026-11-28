@@ -882,8 +882,14 @@ async function runPrintFlow(page, opts, shoot, checks) {
   );
   check('station card shows the group', /Group: Student \d/.test(printBody));
   check(
-    'station card shows engagement',
+    'seating sheet shows engagement',
     printBody.includes('Cognitive') && printBody.includes('Medium'),
+  );
+  const stationCardText = await page.locator('.print-card').first().innerText();
+  check(
+    'station card is student-facing',
+    !/(Station card|Seats:|Engagement|Untitled lesson)/.test(stationCardText),
+    stationCardText.replace(/\n/g, ' | '),
   );
   check(
     'one card per station',

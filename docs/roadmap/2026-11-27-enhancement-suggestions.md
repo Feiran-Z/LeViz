@@ -45,9 +45,9 @@ data already in the document.
 classroom setup needs paper: one prompt per station, one role card per position,
 a compact seating sheet.
 
-**Change:** A "Print materials" action on a layout segment that generates a card
-per station/node with its note, capacity, assigned students, and engagement
-design, plus a seating overview.
+**Change:** A "Print materials" action on a layout segment that generates a
+student-facing card per station/role with its prompt and group, plus a teacher
+seating overview with capacity, assignments, and engagement design.
 
 **Why it matters:** High value for station rotation, mock trial, debate, and
 gallery walks; it turns annotations into physical classroom materials.

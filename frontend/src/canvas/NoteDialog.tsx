@@ -58,6 +58,11 @@ export function NoteDialog({ segment }: { segment: LayoutSegment | null }) {
             <p className="mt-0.5 text-xs text-secondary">
               {node.assignedStudentIds.length} of {node.capacity || '—'} assigned
             </p>
+            {node.type !== 'teacher' ? (
+              <p className="mt-1 text-xs text-secondary">
+                This note prints on the station card — write it for students.
+              </p>
+            ) : null}
           </div>
           <button type="button" className="icon-btn" onClick={() => openNoteEditor(null)} aria-label="Close note editor">
             <Icon name="x" />

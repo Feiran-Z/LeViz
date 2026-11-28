@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a read-only print preview for a layout segment: one seating sheet plus one card per station/role, printed through the browser.
+**Goal:** Add a read-only print preview for a layout segment: one teacher seating sheet plus one student-facing card per station/role, printed through the browser.
 
 **Architecture:** A pure `buildPrintMaterials` domain helper turns a `LayoutSegment` and roster into cards/seats. A new hash route `/lessons/:lessonId/print/:segmentId` loads the lesson with `saveOnClose: false` and renders a printable pack. Entry links live in the layout toolbar and overview; browser print does the rest.
 
@@ -17,7 +17,8 @@
 - Pack order: one seating sheet page, then one card per page. Sheet first.
 - Card nodes: `station` and `round-table` always; any other non-teacher node with a non-blank note. Exclude the teacher and bare chairs/desks/stops.
 - Seating rows: every node with `capacity > 0`, in reading order (y, then x), with assigned names.
-- Card engagement: `resolveNodeEngagement(segment, node)`; sheet engagement: `resolveSegmentEngagement(segment)`.
+- Cards are student-facing: label, note prompt, and group names only when non-empty. Capacity, card numbering/type, engagement, and the lesson/segment footer stay on the seating sheet.
+- Sheet engagement shows the activity design plus any station overrides (`resolveNodeEngagement`).
 - Browser print only — no PDF library, no upload, no new persistence, no schema change.
 - Print output contains no app chrome/toolbar; white paper, dark text, visible borders, no reliance on background color.
 - All commands run from `frontend/`.
@@ -31,6 +32,7 @@
 - An annotated chair, podium, or wall anchor must get a card; a bare one must not. Domain test.
 - An assignment pointing at a student missing from the roster must print “Unknown”, not a blank. Domain test.
 - The seating sheet must fit one printed page; its instruction block and thumbnail must not push the assignment table onto page 2. Driver height check.
+- Station cards must carry only student-facing content: no card sequence, type tag, capacity, engagement, or lesson/segment footer. Driver text assertion.
 
 ---
 
@@ -257,6 +259,7 @@ git commit -m "feat: add print materials domain builder"
 - Modify: `frontend/src/App.tsx`
 - Modify: `frontend/src/components/segments/LayoutSegmentEditor.tsx`
 - Modify: `frontend/src/components/overview/LessonOverview.tsx`
+- Modify: `frontend/src/canvas/NoteDialog.tsx`
 - Modify: `frontend/src/index.css`
 - Modify: `frontend/.claude/skills/run-leviz-frontend/driver.mjs`
 
@@ -281,7 +284,8 @@ Then create a lesson, add the **Station rotation** layout, add eight students, g
 - body includes `Seating sheet` and `Seats and assignments`;
 - body includes `Station 1 prompt` and `Choose one sentence to share.`;
 - body matches `/Group: Student \d/`;
-- body includes `Cognitive` and `Medium`;
+- the seating sheet includes `Cognitive` and `Medium` and the card count;
+- the first `.print-card` text omits card sequence/type, `Seats:`, `Engagement`, and the lesson/segment footer;
 - `page.locator('.print-card')` has count `4`;
 - at a `720×960` print viewport, the `.print-sheet` height is at most `960px` (one page);
 - the print page has no `Roster` tab;
@@ -330,17 +334,17 @@ Render:
 - `LayoutThumbnail` if `segment.canvas.nodes.length > 0`, else `No furniture placed.`;
 - heading `Seats and assignments` and a table with columns `Seat / station`, `Students`, `Capacity`; rows `row.node.label`, `row.groupNames.join(', ') || '—'`, `${row.node.assignedStudentIds.length}/${row.node.capacity}`;
 - if no seats: `No student seats in this layout.`;
-- if no cards: `No station cards yet — add a station or a note in the editor.`
+- a `Station engagement overrides` list for cards where `nodeOverridesEngagement(card.node)` is true;
+- if no cards: `No station cards yet — add a station or a note in the editor.`; otherwise a line `N station/role cards follow in room order.`
 
-Each card includes:
+Each card is student-facing and includes:
 
-- kicker `NODE_TYPE_INFO[card.node.type].label card ${index + 1} of ${materials.cards.length}`;
 - `h2` `card.node.label || 'Untitled station'`;
 - a prompt block: if the node has a non-blank note, the note title then body (`whitespace-pre-wrap text-[15px] leading-7`); otherwise a bordered blank area with `min-h-[3in]` and a screen-only muted line `No prompt yet — add one in the editor, or write on the printed card.` (use `print:hidden` on that line);
-- `Group: ${card.groupNames.join(', ') || 'No group assigned'}`;
-- `Seats: ${card.node.assignedStudentIds.length}/${card.node.capacity}` when capacity > 0;
-- `Engagement` + `<EngagementSummary design={card.engagement} />`;
-- footer `${lesson.title} · ${segment.title}`.
+- `Group: ${card.groupNames.join(', ')}` only when the group is non-empty;
+- no card sequence, type tag, capacity, engagement, or lesson/segment footer.
+
+Also add a note-dialog hint for non-teacher nodes: `This note prints on the station card — write it for students.`
 
 No fixed height on the prompt block; one card per page is set by the print page break.
 
@@ -384,8 +388,8 @@ Expected: tests pass, typecheck/build clean, print flow all checks pass with zer
 ```bash
 git add frontend/src/pages/PrintMaterialsPage.tsx frontend/src/components/print/PrintPack.tsx \
   frontend/src/App.tsx frontend/src/components/segments/LayoutSegmentEditor.tsx \
-  frontend/src/components/overview/LessonOverview.tsx frontend/src/index.css \
-  frontend/.claude/skills/run-leviz-frontend/driver.mjs
+  frontend/src/components/overview/LessonOverview.tsx frontend/src/canvas/NoteDialog.tsx \
+  frontend/src/index.css frontend/.claude/skills/run-leviz-frontend/driver.mjs
 git commit -m "feat: add printable station cards and seating sheet"
 ```
 
@@ -443,5 +447,5 @@ git commit -m "docs: document printable materials"
 
 - **Spec coverage:** route, entries, sheet, cards, filtering, engagement, empty states, read-only close, browser print, print CSS, tests, driver, docs are all assigned.
 - **Types:** `PrintMaterials`, `PrintCard`, `SeatingRow`, and `buildPrintMaterials` are defined once in Task 1 and consumed unchanged in Task 2.
-- **Review Focus:** the long-note, Harkness, print-chrome, annotated-stop, missing-name, and one-page-sheet cases each have a test in the task that owns the behavior.
+- **Review Focus:** the long-note, Harkness, print-chrome, annotated-stop, missing-name, one-page-sheet, and student-facing-card cases each have a test in the task that owns the behavior.
 - **No hidden implementation:** Task 2 pins props, selectors, copy, page structure, and CSS behavior; the builder chooses only typography/spacing details within those constraints.

@@ -15,8 +15,8 @@ printing; no PDF library and no backend.
 - Print a layout segment's materials without printing the app chrome or the whole lesson.
 - A compact seating sheet: lesson/activity/segment header, instructions, layout thumbnail,
   activity engagement, and a table of seats with assigned students.
-- One card per station/role: label, prompt, planned group, capacity, resolved station
-  engagement, and a small lesson/segment footer.
+- One student-facing card per station/role: label, prompt, optional group names, and a
+  writing space. Teacher metadata lives on the seating sheet.
 - Entry from the layout segment toolbar and the lesson overview.
 - Read-only: entering and leaving the print preview never writes the lesson.
 
@@ -58,19 +58,21 @@ printing; no PDF library and no backend.
 - **Entry points:** a **Print materials** link in the layout segment toolbar and in the
   overview's layout section. The print preview has Back to editor and Print.
 - **Seating sheet content:** lesson title, activity label, segment title/duration,
-  activity engagement summary, activity instructions, read-only `LayoutThumbnail`, and a
-  table of every assignable node (label, assigned names, capacity) in reading order.
+  activity engagement summary, activity instructions, read-only `LayoutThumbnail`, a
+  table of every assignable node (label, assigned names, capacity) in reading order,
+  station engagement overrides when any station differs from the activity, and the
+  number of cards in the pack.
 - **Card nodes:**
   - station and round-table nodes always (a blank prompt card is useful);
   - any other node with a note (a chair/desk note can be a role card, e.g. Witness);
   - exclude the teacher and nodes with neither a station/table type nor a note.
   This keeps Harkness seating on the sheet rather than printing twenty empty cards.
 - **Card content:** station/role label; note title/body (or a blank prompt area with a
-  muted “No prompt yet” on screen, blank on paper); planned group names; capacity;
-  resolved station engagement (node override or activity); footer with the lesson and
-  segment title.
-- **Engagement:** the sheet shows the activity-level design; each card shows the level
-  that applies at that station.
+  muted “No prompt yet” on screen, blank on paper); assigned group names only when the
+  group is non-empty. Cards omit card numbering/type, capacity, engagement, and the
+  lesson/segment footer; those teacher details live on the sheet.
+- **Engagement:** the sheet shows the activity-level design and any station overrides;
+  cards do not show designed engagement.
 - **Print styling:** `@page { size: letter; margin: 0.5in; }`; a `.print-page` per card
   with `break-after: page` (last page auto); no app chrome; white paper, dark text,
   visible card borders; no reliance on background color. Screen preview uses a calm
@@ -87,9 +89,10 @@ printing; no PDF library and no backend.
   (node override), seats table, empty segment.
 - Driver `--flow print`: create a station-rotation layout with groups and a station
   note; open Print materials from the editor; verify the route, seating sheet, card
-  content/group/engagement, Print button; emulate print media and verify the toolbar is
-  hidden; stub `window.print` and verify it is called; open the overview's Print
-  materials entry. Existing lesson/classes/teach flows stay green.
+  prompt/group, that the card is student-facing (no card sequence, type tag, capacity,
+  engagement, or lesson footer), sheet engagement, Print button; emulate print media and
+  verify the toolbar is hidden; stub `window.print` and verify it is called; open the
+  overview's Print materials entry. Existing lesson/classes/teach flows stay green.
 - No lesson write from entering/leaving the print route (same save-free close test
   already covers the mechanism).
 
@@ -111,11 +114,13 @@ printing; no PDF library and no backend.
   one printed page.
 - **Print colors:** the thumbnail uses theme tokens; print CSS must guarantee legible
   text/borders even with backgrounds disabled.
+- **Teacher notes print verbatim:** the station note is the student prompt; the note
+  dialog warns that it prints for students. A separate student-prompt field is V1.1.
 - **Data privacy:** printing contains names; the teacher prints locally. No upload.
 
 ## What is left to the builder
 
-- Exact card typography, border/cut treatment, and footer copy.
+- Exact card typography and border/cut treatment.
 - Print CSS values and page-break tuning.
 - The size/spacing of the seating table and thumbnail.
 - The `--flow print` fixtures and stub details.
