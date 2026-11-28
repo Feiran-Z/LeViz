@@ -1,9 +1,15 @@
 import { IndexedDbLessonRepository } from './indexeddb';
 import { IndexedDbClassRosterRepository } from './indexeddb/classes';
-import type { ClassRosterRepository, LessonRepository } from './types';
+import { IndexedDbWorkspaceRepository } from './indexeddb/workspace';
+import type {
+  ClassRosterRepository,
+  LessonRepository,
+  WorkspaceRepository,
+} from './types';
 
 let repository: LessonRepository | null = null;
 let classRepository: ClassRosterRepository | null = null;
+let workspaceRepository: WorkspaceRepository | null = null;
 
 function pocketBaseUrl(): string | undefined {
   return import.meta.env['VITE_POCKETBASE_URL' as keyof ImportMetaEnv] as string | undefined;
@@ -42,4 +48,19 @@ export function getClassRosterRepository(): ClassRosterRepository {
 /** Test seam only. */
 export function setClassRosterRepository(next: ClassRosterRepository | null): void {
   classRepository = next;
+}
+
+/** Whole-workspace backup/restore; Phase 2 adds a PocketBase implementation. */
+export function getWorkspaceRepository(): WorkspaceRepository {
+  if (workspaceRepository) return workspaceRepository;
+  if (pocketBaseUrl()) {
+    console.warn('[LeViz] VITE_POCKETBASE_URL is set, but PocketBase persistence ships in Phase 2. Using IndexedDB for the workspace.');
+  }
+  workspaceRepository = new IndexedDbWorkspaceRepository();
+  return workspaceRepository;
+}
+
+/** Test seam only. */
+export function setWorkspaceRepository(next: WorkspaceRepository | null): void {
+  workspaceRepository = next;
 }

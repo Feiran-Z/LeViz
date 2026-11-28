@@ -19,13 +19,17 @@ browser print dialog handles paper and PDF.
 
 - This is a **preview build** for feedback and a small pilot, not a production
   service.
-- **No accounts, no backend.** Lessons are stored in the browser's IndexedDB on
-  the device you use. They do not sync across devices or browsers.
-- **Back up with Export.** Clearing site data, using a private window, or switching
-  browsers means the lessons are gone unless you exported them first. Import
-  restores them.
-- **Class rosters are local too.** A lesson export carries that lesson's roster
-  snapshot but not the class library. Class library backup/export is a follow-up.
+- **No accounts, no backend.** Lessons and classes are stored in the browser's
+  IndexedDB on the device you use. They do not sync across devices or browsers.
+- **Back up with Backup & restore.** The lesson list downloads one file with every
+  lesson and reusable class. Clearing site data, using a private window, or switching
+  browsers means the workspace is gone unless you backed it up first. A single-lesson
+  Export remains for sharing one plan.
+- **Class rosters are local too.** The workspace backup includes the class library; a
+  single-lesson export carries only that lesson's roster snapshot.
+- **Storage protection is best-effort.** LeViz asks the browser for persistent storage
+  and shows the result in Backup & restore. Back up anyway: browser eviction policies
+  vary.
 - **Teach mode does not edit lessons.** It opens a read-only run; timers and chimes
   are local to the tab.
 - **Print materials is local too.** The seating sheet and cards use the lesson's

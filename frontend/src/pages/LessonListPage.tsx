@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { WorkspaceDialog } from '../components/backup/WorkspaceDialog';
 import { ClassesDialog } from '../components/classes/ClassesDialog';
 import { AppFooter } from '../components/layout/AppFooter';
 import { PilotNotice } from '../components/pilot/PilotNotice';
 import { PreviewBuildGate } from '../components/pilot/PreviewBuildGate';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Icon } from '../components/ui/Icons';
-import { serializeLesson } from '../domain/serialize';
-import type { LessonSummary } from '../domain/types';
+import { parseLesson, serializeLesson } from '../domain/serialize';
+import { WORKSPACE_KIND } from '../domain/workspace';
+import type { Lesson, LessonSummary } from '../domain/types';
 import { useThemeToggle } from '../hooks/useTheme';
 import { downloadText, readFileAsText } from '../lib/download';
 import { formatMinutes, formatShortDate, formatTimestamp, slugify } from '../lib/format';
+import { requestPersistentStorage } from '../lib/storage';
 import { useLibraryStore } from '../stores/libraryStore';
 import { useUiStore } from '../stores/uiStore';
 
@@ -36,13 +39,20 @@ export function LessonListPage() {
   const importFromJson = useLibraryStore((state) => state.importFromJson);
   const [query, setQuery] = useState('');
   const [pendingDelete, setPendingDelete] = useState<LessonSummary | null>(null);
+  const [pendingImport, setPendingImport] = useState<{
+    json: string;
+    lesson: Lesson;
+    existingTitle: string;
+  } | null>(null);
   const [classesOpen, setClassesOpen] = useState(false);
+  const [backupOpen, setBackupOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     document.title = 'LeViz';
     void refresh();
+    void requestPersistentStorage();
   }, [refresh]);
 
   const filtered = useMemo(() => {
@@ -64,12 +74,39 @@ export function LessonListPage() {
     }
   };
 
-  const handleImport = async (file: File) => {
+  const completeImport = async (json: string) => {
     try {
-      const lesson = await importFromJson(await readFileAsText(file));
+      const lesson = await importFromJson(json);
       notify(`Imported “${lesson.title}”.`, 'success');
       await refresh();
       navigate(`/lessons/${lesson.id}`);
+    } catch (cause) {
+      notify(cause instanceof Error ? cause.message : 'Could not import that file.', 'error');
+    }
+  };
+
+  const handleImport = async (file: File) => {
+    try {
+      const json = await readFileAsText(file);
+      try {
+        const probe = JSON.parse(json) as { kind?: unknown } | null;
+        if (probe && typeof probe === 'object' && probe.kind === WORKSPACE_KIND) {
+          notify(
+            'That is a workspace backup. Use Backup & restore to add all lessons and classes.',
+            'info',
+          );
+          return;
+        }
+      } catch {
+        // parseLesson below reports the malformed JSON clearly.
+      }
+      const lesson = parseLesson(json);
+      const existing = await getDocument(lesson.id);
+      if (existing) {
+        setPendingImport({ json, lesson, existingTitle: existing.title });
+        return;
+      }
+      await completeImport(json);
     } catch (cause) {
       notify(cause instanceof Error ? cause.message : 'Could not import that file.', 'error');
     }
@@ -128,6 +165,15 @@ export function LessonListPage() {
           <button
             type="button"
             className="btn btn-secondary btn-sm"
+            aria-label="Backup and restore"
+            onClick={() => setBackupOpen(true)}
+          >
+            <Icon name="file" size={15} />
+            <span className="hidden sm:inline">Backup</span>
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
             onClick={() => fileInput.current?.click()}
           >
             <Icon name="upload" size={15} />
@@ -152,7 +198,7 @@ export function LessonListPage() {
         </div>
       </header>
 
-      <PilotNotice />
+      <PilotNotice onBackup={() => setBackupOpen(true)} />
       <PreviewBuildGate />
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-20 pt-10">
@@ -295,6 +341,7 @@ export function LessonListPage() {
       <AppFooter />
 
       <ClassesDialog open={classesOpen} onClose={() => setClassesOpen(false)} />
+      <WorkspaceDialog open={backupOpen} onClose={() => setBackupOpen(false)} />
 
       <ConfirmDialog
         open={pendingDelete !== null}
@@ -308,6 +355,24 @@ export function LessonListPage() {
         danger
         onConfirm={() => void handleDelete()}
         onCancel={() => setPendingDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={pendingImport !== null}
+        title="Replace existing lesson?"
+        message={
+          pendingImport
+            ? `“${pendingImport.existingTitle}” already exists in this browser. Importing “${pendingImport.lesson.title}” will replace it.`
+            : ''
+        }
+        confirmLabel="Replace lesson"
+        danger
+        onConfirm={() => {
+          const pending = pendingImport;
+          setPendingImport(null);
+          if (pending) void completeImport(pending.json);
+        }}
+        onCancel={() => setPendingImport(null)}
       />
     </div>
   );

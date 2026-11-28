@@ -19,13 +19,13 @@
 // Exit codes: 0 = clean run, 1 = failure or console/page error,
 //             2 = bad usage.
 
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
 function usage() {
   return `Usage: node driver.mjs [options]
 
-  --flow load|lesson|classes|teach|print
+  --flow load|lesson|classes|teach|print|backup
                         Smoke flow to run (default: load)
   --url URL             Page to open (default: http://localhost:5173)
   --out DIR             Screenshot directory (default: screenshots)
@@ -60,8 +60,8 @@ function parseArgs(argv) {
       process.exit(2);
     }
   }
-  if (!['load', 'lesson', 'classes', 'teach', 'print'].includes(opts.flow)) {
-    console.error(`--flow must be "load", "lesson", "classes", "teach", or "print"`);
+  if (!['load', 'lesson', 'classes', 'teach', 'print', 'backup'].includes(opts.flow)) {
+    console.error(`--flow must be "load", "lesson", "classes", "teach", "print", or "backup"`);
     process.exit(2);
   }
   if (!Number.isFinite(opts.timeout) || opts.timeout <= 0) {
@@ -400,6 +400,12 @@ async function runLessonFlow(page, opts, shoot, checks) {
   await download.saveAs(exportPath);
 
   await page.locator('input[type="file"]').setInputFiles(exportPath);
+  await page.getByRole('button', { name: 'Replace lesson' }).waitFor({ timeout: 5000 });
+  check(
+    're-import asks before replacing',
+    await page.getByRole('button', { name: 'Replace lesson' }).isVisible(),
+  );
+  await page.getByRole('button', { name: 'Replace lesson' }).click();
   await page.waitForURL(/\/lessons\//, { timeout: 10000 });
   await page.waitForTimeout(1200);
   await page.getByRole('button', { name: /^Text segment 2/ }).first().click();
@@ -976,6 +982,71 @@ async function runPrintFlow(page, opts, shoot, checks) {
   await shoot('03-overview-entry');
 }
 
+async function runBackupFlow(page, opts, shoot, checks) {
+  const check = (name, condition, detail) => {
+    checks.push({ name, ok: Boolean(condition), ...(detail ? { detail } : {}) });
+    if (!condition) throw new Error(`Check failed: ${name}${detail ? ` (${detail})` : ''}`);
+  };
+
+  await page.goto(opts.url, { waitUntil: 'load', timeout: opts.timeout });
+  await dismissPreviewGate(page);
+
+  await page.getByRole('button', { name: 'New lesson' }).first().click();
+  await page.waitForURL(/\/lessons\//);
+  await page.waitForTimeout(700);
+  await page.getByRole('link', { name: 'Back to all lessons' }).click();
+  await page.getByRole('button', { name: 'New lesson' }).first().waitFor({ timeout: 10000 });
+  await page.waitForTimeout(300);
+
+  await page.getByRole('button', { name: 'Backup and restore' }).click();
+  await page.getByRole('button', { name: 'Download', exact: true }).waitFor();
+  const [download] = await Promise.all([
+    page.waitForEvent('download', { timeout: 5000 }),
+    page.getByRole('button', { name: 'Download', exact: true }).click(),
+  ]);
+  check(
+    'workspace backup downloads',
+    Boolean(download) && /\.leviz-backup\.json$/.test(download.suggestedFilename()),
+    download?.suggestedFilename() ?? '',
+  );
+  const backupPath = `${opts.out.replace(/\/$/, '')}/workspace-${stamp()}.leviz-backup.json`;
+  await download.saveAs(backupPath);
+  const backup = JSON.parse(await readFile(backupPath, 'utf8'));
+  check(
+    'workspace backup contains lessons and classes',
+    backup.kind === 'leviz-workspace' &&
+      Array.isArray(backup.lessons) &&
+      backup.lessons.length === 1 &&
+      Array.isArray(backup.classes),
+    JSON.stringify({ kind: backup.kind, lessons: backup.lessons?.length, classes: backup.classes?.length }),
+  );
+  check('workspace backup has a schema version', backup.schemaVersion === 1, String(backup.schemaVersion));
+  await page.waitForTimeout(250);
+  const dialogText = await page.getByRole('dialog').innerText();
+  check('backup dialog records the last backup', dialogText.includes('Last backup:'));
+  await shoot('01-backup-dialog');
+  await page.getByRole('button', { name: 'Close backup and restore' }).click();
+  await page.waitForTimeout(300);
+
+  await page.getByRole('button', { name: 'Backup and restore' }).click();
+  await page.getByLabel('Restore a workspace backup').setInputFiles(backupPath);
+  await page.getByText('Some items already exist').waitFor({ timeout: 5000 });
+  check(
+    'restore reports the lesson conflict',
+    (await page.getByRole('dialog').innerText()).includes('1 item matches this browser'),
+  );
+  await page.getByRole('button', { name: 'Import as copies' }).click();
+  await page.waitForTimeout(900);
+  check('restore closes the dialog', (await page.getByRole('dialog').count()) === 0);
+  const lessonCards = await page.locator('main article').count();
+  check('copy restore keeps the existing lesson and adds a copy', lessonCards === 2, String(lessonCards));
+  check(
+    'copy restore labels the copy',
+    (await page.locator('main article').filter({ hasText: '(restored copy)' }).count()) === 1,
+  );
+  await shoot('02-restored');
+}
+
 async function main() {
   const opts = parseArgs(process.argv);
   await mkdir(opts.out, { recursive: true });
@@ -1008,6 +1079,7 @@ async function main() {
     else if (opts.flow === 'classes') await runClassesFlow(page, opts, shoot, checks);
     else if (opts.flow === 'teach') await runTeachFlow(page, opts, shoot, checks);
     else if (opts.flow === 'print') await runPrintFlow(page, opts, shoot, checks);
+    else if (opts.flow === 'backup') await runBackupFlow(page, opts, shoot, checks);
     else await runLoadFlow(page, opts, shoot);
 
     const title = await page.title();

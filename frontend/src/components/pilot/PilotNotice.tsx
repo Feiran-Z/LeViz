@@ -17,7 +17,7 @@ function initiallyDismissed(): boolean {
  * them up, which build is deployed, and (once configured) how to send feedback.
  * Dismissal is remembered in this browser.
  */
-export function PilotNotice() {
+export function PilotNotice({ onBackup }: { onBackup?: () => void }) {
   const [dismissed, setDismissed] = useState(initiallyDismissed);
 
   if (dismissed) return null;
@@ -35,7 +35,16 @@ export function PilotNotice() {
     <div className="border-b border-default bg-surface print:hidden">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2 text-[11px] text-secondary">
         <span className="tag">Preview build</span>
-        <span>Lessons are saved only in this browser. Export to back up.</span>
+        <span>Lessons and classes are saved only in this browser.</span>
+        {onBackup ? (
+          <button
+            type="button"
+            className="font-medium text-primary underline underline-offset-2 hover:text-accent"
+            onClick={onBackup}
+          >
+            Back up all
+          </button>
+        ) : null}
         {PILOT_FEEDBACK_URL ? (
           <a
             className="font-medium text-primary underline underline-offset-2 hover:text-accent"

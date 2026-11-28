@@ -15,12 +15,12 @@ below are relative to `LeViz/frontend/`.
 Every command below was executed against Phase 1 of the implementation plan on this
 machine. Evidence from that run:
 
-- `npm test` → **20 files, 152 tests passed**, including the class-repository contract,
-  the IndexedDB v1 → v2 migration, the teach timer/close/restart tests, and the print
-  materials builder.
+- `npm test` → **22 files, 162 tests passed**, including the class-repository contract,
+  the IndexedDB v1 → v2 migration, the teach timer/close/restart tests, the print
+  materials builder, and the workspace backup planner/repository.
 - `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.24 MB
   (382 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
-- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 37 checks
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 38 checks
   passed**, zero console errors, zero page errors, 17 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow classes` → **all 14 checks
   passed**, zero console errors, zero page errors, 4 non-blank screenshots.
@@ -28,13 +28,16 @@ machine. Evidence from that run:
   passed**, zero console errors, zero page errors, 5 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow print` → **all 14 checks
   passed**, zero console errors, zero page errors, 3 non-blank screenshots.
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow backup` → **all 8 checks
+  passed**, zero console errors, zero page errors, 2 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
 (asserting 12 chairs + teacher), adds four students,
 drags one onto a seat, saves a node note, moves a node and undoes it, generates and
 checks the prefilled Harkness activity guidance, applies groups, adds a text segment via
-the template menu, reloads to prove persistence, then exports and
-re-imports the JSON. It also checks the copyright/license footer on the lesson list
+the template menu, reloads to prove persistence, then exports and re-imports the JSON,
+confirming the replace prompt before the id collision overwrites the lesson. It also
+checks the copyright/license footer on the lesson list
 (including the served third-party notices file) and the overview, verifies the footer
 prints, and asserts the editor has no footer. It also verifies the landing preview gate:
 the feedback-form link, that Escape and backdrop clicks do not dismiss it, and that
@@ -60,6 +63,11 @@ sheet and assignment table, the station prompt/group, that the card is student-f
 sheet engagement, one card per station, the absence of editor chrome, the screen toolbar
 hidden under print media, that the seating sheet fits one printed page, that the Print
 button calls `window.print`, and the overview's Print materials entry.
+
+The `backup` flow creates a lesson, opens Backup & restore, downloads a
+`.leviz-backup.json`, asserts the file kind/schema/contents, restores it into the same
+workspace, and chooses **Import as copies** at the conflict panel. It verifies the
+existing lesson remains, a copy appears beside it, and the copy title is labelled.
 
 ## Prerequisites
 
@@ -131,14 +139,14 @@ Driver flags:
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--flow load\|lesson\|classes\|teach\|print` | `load` | `load` = open + screenshot. `lesson` = full end-to-end smoke. `classes` = reusable class roster lifecycle. `teach` = teach-mode timers and rotation guides. `print` = printable seating sheet and station cards. |
+| `--flow load\|lesson\|classes\|teach\|print\|backup` | `load` | `load` = open + screenshot. `lesson` = full end-to-end smoke. `classes` = reusable class roster lifecycle. `teach` = teach-mode timers and rotation guides. `print` = printable seating sheet and station cards. `backup` = full workspace backup/restore. |
 | `--url URL` | `http://localhost:5173` | Page to open |
 | `--out DIR` | `screenshots` | Where PNGs and the exported JSON land |
 | `--headed` | off | Show a real window |
 | `--timeout MS` | `30000` | Navigation timeout |
 | `--no-fail-on-console` | off | Do not fail on `console.error` |
 
-The driver prints a JSON summary. With `--flow lesson`, `--flow classes`, `--flow teach`, or `--flow print` it includes a `checks` array:
+The driver prints a JSON summary. With `--flow lesson`, `--flow classes`, `--flow teach`, `--flow print`, or `--flow backup` it includes a `checks` array:
 
 ```json
 { "ok": true, "flow": "lesson", "browser": "system Chrome",
@@ -184,6 +192,15 @@ fired. **Open the screenshots** — a blank PNG is a failure even when exit code
   asserts the `.print-sheet` height is at most `960px`. A PDF export of the fixture is
   five letter pages: one seating sheet plus four station cards.
 
+### What the backup flow assumes
+
+- A fresh context starts with one lesson created by the flow; the backup therefore has
+  one lesson and no classes.
+- The download is saved under `--out` and parsed in Node to assert `kind`,
+  `schemaVersion`, lessons, and classes.
+- The flow restores that same file to force a conflict, then chooses **Import as
+  copies** and asserts the original lesson plus one copy remain.
+
 ## Run — human path
 
 ```bash
@@ -199,8 +216,9 @@ a real browser: do not try to validate the canvas with jsdom.
 
 ## Known constraints
 
-- **No backend in Phase 1.** Lessons persist in IndexedDB (`leviz` / `lessons`) per
-  browser profile; export is the backup and sharing path.
+- **No backend in Phase 1.** Lessons and classes persist in IndexedDB per browser
+  profile; **Backup & restore** is the full workspace backup, while a single-lesson
+  export is for sharing one plan.
 - `VITE_POCKETBASE_URL` is read by the repository factory but PocketBase persistence
   ships in Phase 2. If set, the app warns and continues with IndexedDB.
 - The app is a static SPA: `dist/` must be served with SPA fallback for `/lessons/:id`.

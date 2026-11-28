@@ -42,8 +42,16 @@ export function parseLesson(json: string): Lesson {
     `schemaVersion ${String(parsed['schemaVersion'])} is newer than this app supports.`,
   );
 
-  const lesson = parsed['lesson'];
-  assert(isRecord(lesson), 'missing lesson.');
+  return normalizeLessonDocument(parsed['lesson']);
+}
+
+/**
+ * Validate and normalize one lesson document. Shared by lesson-file and
+ * workspace-backup imports.
+ */
+export function normalizeLessonDocument(value: unknown): Lesson {
+  assert(isRecord(value), 'missing lesson.');
+  const lesson = value;
   assert(typeof lesson['id'] === 'string' && lesson['id'].length > 0, 'lesson.id is required.');
   assert(typeof lesson['title'] === 'string', 'lesson.title is required.');
   assert(Array.isArray(lesson['segments']), 'lesson.segments must be an array.');

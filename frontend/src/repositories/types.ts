@@ -21,3 +21,17 @@ export interface ClassRosterRepository {
   saveClass(classRoster: ClassRoster): Promise<ClassRoster>;
   deleteClass(id: string): Promise<void>;
 }
+
+export interface WorkspaceContents {
+  lessons: Lesson[];
+  classes: ClassRoster[];
+}
+
+/**
+ * Whole-workspace persistence for backup/restore. `saveAll` must be atomic so
+ * a failed restore cannot leave half the lessons behind.
+ */
+export interface WorkspaceRepository {
+  readAll(): Promise<WorkspaceContents>;
+  saveAll(contents: WorkspaceContents): Promise<void>;
+}
