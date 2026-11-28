@@ -96,10 +96,10 @@ export function PreviewBuildGate({
       >
         <p className="section-label">Preview build</p>
         <h2 id="preview-gate-title" className="mt-1 text-xl font-semibold tracking-[-0.02em]">
-          LeViz is in preview build.
+          Disclaimer: Lesson plans are saved locally only; there is no server-side synchronization. You can export your lesson plans as a JSON file and import them later.
         </h2>
         <p id="preview-gate-description" className="mt-3 text-sm leading-relaxed text-secondary">
-          By using it, you solemnly swear that you will provide feedback and suggestions via the
+          LeViz is in preview build. By using it, you solemnly swear that you will provide feedback and suggestions via the
           Microsoft Form:
         </p>
         <a
