@@ -39,6 +39,8 @@ data already in the document.
 
 ## 3. Printable station and role cards
 
+**Status:** Implemented (V1). Design: [Print materials design](../superpowers/specs/2026-11-28-print-materials-design.md).
+
 **Teacher pain:** Station prompts, roles, and groups live on screen, but
 classroom setup needs paper: one prompt per station, one role card per position,
 a compact seating sheet.

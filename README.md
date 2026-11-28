@@ -8,6 +8,11 @@ Teach mode runs a lesson read-only with segment timers, the current text or
 layout, station cards, and rotation guides for station rotation and gallery
 walk. It is available from a lesson card, the editor, and the overview.
 
+Print materials turns a layout segment into a paper pack: a compact seating
+sheet and one card per station or role, with prompts, groups, capacity, and
+designed engagement. Open it from the layout toolbar or the overview; the
+browser print dialog handles paper and PDF.
+
 **Live preview:** <https://feiran-z.github.io/LeViz/>
 
 ## Pilot notes
@@ -23,6 +28,8 @@ walk. It is available from a lesson card, the editor, and the overview.
   snapshot but not the class library. Class library backup/export is a follow-up.
 - **Teach mode does not edit lessons.** It opens a read-only run; timers and chimes
   are local to the tab.
+- **Print materials is local too.** The seating sheet and cards use the lesson's
+  saved roster; the browser print dialog sends nothing to a server.
 - **Desktop and laptop first.** The editor is usable on a tablet; phone layout is
   out of scope.
 - The site is public. Use fictional student names in any demo lessons.

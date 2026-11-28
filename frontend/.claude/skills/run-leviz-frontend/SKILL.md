@@ -15,16 +15,19 @@ below are relative to `LeViz/frontend/`.
 Every command below was executed against Phase 1 of the implementation plan on this
 machine. Evidence from that run:
 
-- `npm test` → **19 files, 146 tests passed**, including the class-repository contract,
-  the IndexedDB v1 → v2 migration, and the teach timer/close/restart tests.
-- `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.15 MB
-  (358 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
+- `npm test` → **20 files, 152 tests passed**, including the class-repository contract,
+  the IndexedDB v1 → v2 migration, the teach timer/close/restart tests, and the print
+  materials builder.
+- `npm run build` → `dist/` emitted; strict TypeScript clean. JS bundle ~1.24 MB
+  (382 kB gzip) with Vite's chunk-size warning (expected: Konva + TipTap).
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow lesson` → **all 32 checks
   passed**, zero console errors, zero page errors, 16 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow classes` → **all 14 checks
   passed**, zero console errors, zero page errors, 4 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow teach` → **all 31 checks
   passed**, zero console errors, zero page errors, 5 non-blank screenshots.
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow print` → **all 12 checks
+  passed**, zero console errors, zero page errors, 3 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
 (asserting 12 chairs + teacher), adds four students,
@@ -48,6 +51,12 @@ checks the text timer, start/pause/reset/+1, time-up without auto-advance, next/
 a reload restoring paused (text and station), station and gallery rotation guides, the
 guide toggle, the planned-end tick, a11y state, Start over, and the editor/overview Teach
 entries.
+
+The `print` flow builds a station-rotation layout with groups and a station prompt, then
+opens Print materials from the layout toolbar. It checks the print route, the seating
+sheet and assignment table, the station prompt/group/engagement, one card per station,
+the absence of editor chrome, the screen toolbar hidden under print media, that the
+Print button calls `window.print`, and the overview's Print materials entry.
 
 ## Prerequisites
 
@@ -119,14 +128,14 @@ Driver flags:
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--flow load\|lesson\|classes\|teach` | `load` | `load` = open + screenshot. `lesson` = full end-to-end smoke. `classes` = reusable class roster lifecycle. `teach` = teach-mode timers and rotation guides. |
+| `--flow load\|lesson\|classes\|teach\|print` | `load` | `load` = open + screenshot. `lesson` = full end-to-end smoke. `classes` = reusable class roster lifecycle. `teach` = teach-mode timers and rotation guides. `print` = printable seating sheet and station cards. |
 | `--url URL` | `http://localhost:5173` | Page to open |
 | `--out DIR` | `screenshots` | Where PNGs and the exported JSON land |
 | `--headed` | off | Show a real window |
 | `--timeout MS` | `30000` | Navigation timeout |
 | `--no-fail-on-console` | off | Do not fail on `console.error` |
 
-The driver prints a JSON summary. With `--flow lesson`, `--flow classes`, or `--flow teach` it includes a `checks` array:
+The driver prints a JSON summary. With `--flow lesson`, `--flow classes`, `--flow teach`, or `--flow print` it includes a `checks` array:
 
 ```json
 { "ok": true, "flow": "lesson", "browser": "system Chrome",
@@ -155,6 +164,16 @@ fired. **Open the screenshots** — a blank PNG is a failure even when exit code
   changes belong in the driver too.
 - Each run uses a fresh browser context, so IndexedDB starts empty and the run does
   not pollute other data.
+
+### What the print flow assumes
+
+- Default class size (20): Station 1 of the station-rotation template is
+  `(90, 60)` with a `250×170` box, so its center is `(215, 145)` in world units.
+  Update the driver if the template or canvas changes.
+- The flow stubs `window.print` before `goto`, then asserts the Print button calls it
+  exactly once. The native dialog is never opened.
+- The print page reads the saved lesson; the editor's close save must land before the
+  route loads. The flow waits at each navigation.
 
 ## Run — human path
 
