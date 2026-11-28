@@ -87,16 +87,6 @@ export function LayoutSegmentEditor({ segment }: { segment: LayoutSegment }) {
         </span>
 
         <div className="ml-auto flex items-center gap-1">
-          {lessonId ? (
-            <Link
-              to={`/lessons/${lessonId}/print/${segment.id}`}
-              className="btn btn-ghost btn-sm"
-              title="Print station and role cards, plus a seating sheet"
-            >
-              <Icon name="printer" size={13} />
-              Print materials
-            </Link>
-          ) : null}
           <button
             type="button"
             className={`btn btn-ghost btn-sm ${instructionsOpen ? 'btn-active' : ''}`}
@@ -114,6 +104,16 @@ export function LayoutSegmentEditor({ segment }: { segment: LayoutSegment }) {
               <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
             ) : null}
           </button>
+          {lessonId ? (
+            <Link
+              to={`/lessons/${lessonId}/print/${segment.id}`}
+              className="btn btn-ghost btn-sm"
+              title="Print station and role cards, plus a seating sheet"
+            >
+              <Icon name="printer" size={13} />
+              Print materials
+            </Link>
+          ) : null}
         </div>
       </div>
 
