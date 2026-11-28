@@ -37,18 +37,22 @@ function SeatingSheet({
         <EngagementSummary design={materials.activityEngagement} />
       </div>
 
-      {segment.instructions.trim() ? (
-        <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-secondary">
-          {segment.instructions}
-        </p>
-      ) : null}
-
-      <div className="mt-5">
-        {segment.canvas.nodes.length > 0 ? (
-          <LayoutThumbnail canvas={segment.canvas} />
-        ) : (
-          <p className="text-sm text-secondary">No furniture placed.</p>
-        )}
+      <div className="mt-5 grid gap-4 sm:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+        <div>
+          {segment.canvas.nodes.length > 0 ? (
+            <LayoutThumbnail canvas={segment.canvas} />
+          ) : (
+            <p className="text-sm text-secondary">No furniture placed.</p>
+          )}
+        </div>
+        {segment.instructions.trim() ? (
+          <div>
+            <h2 className="text-[13px] font-semibold">Activity instructions</h2>
+            <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-secondary">
+              {segment.instructions}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-5">

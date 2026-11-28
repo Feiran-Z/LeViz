@@ -105,6 +105,10 @@ printing; no PDF library and no backend.
 - **Page breaks:** one card per page is the safe default; long prompts should use a
   smaller font or a continuation area if they exceed a page. The builder must verify a
   long note does not clip.
+- **Seating sheet overflow:** a long instruction block and a full-width thumbnail can
+  push the assignment table onto a second page. The sheet uses a two-column
+  thumbnail/instructions layout, and the driver asserts the station-rotation sheet fits
+  one printed page.
 - **Print colors:** the thumbnail uses theme tokens; print CSS must guarantee legible
   text/borders even with backgrounds disabled.
 - **Data privacy:** printing contains names; the teacher prints locally. No upload.

@@ -30,6 +30,7 @@
 - In print media the Back/Print toolbar and editor chrome must be gone; only sheet and cards print. Driver test.
 - An annotated chair, podium, or wall anchor must get a card; a bare one must not. Domain test.
 - An assignment pointing at a student missing from the roster must print “Unknown”, not a blank. Domain test.
+- The seating sheet must fit one printed page; its instruction block and thumbnail must not push the assignment table onto page 2. Driver height check.
 
 ---
 
@@ -282,6 +283,7 @@ Then create a lesson, add the **Station rotation** layout, add eight students, g
 - body matches `/Group: Student \d/`;
 - body includes `Cognitive` and `Medium`;
 - `page.locator('.print-card')` has count `4`;
+- at a `720×960` print viewport, the `.print-sheet` height is at most `960px` (one page);
 - the print page has no `Roster` tab;
 - with `page.emulateMedia({ media: 'print' })`, `page.locator('.print-toolbar').isVisible()` is false; then reset to screen;
 - clicking `Print` exactly makes `window.__levizPrintCalls === 1`;
@@ -441,5 +443,5 @@ git commit -m "docs: document printable materials"
 
 - **Spec coverage:** route, entries, sheet, cards, filtering, engagement, empty states, read-only close, browser print, print CSS, tests, driver, docs are all assigned.
 - **Types:** `PrintMaterials`, `PrintCard`, `SeatingRow`, and `buildPrintMaterials` are defined once in Task 1 and consumed unchanged in Task 2.
-- **Review Focus:** the long-note, Harkness, print-chrome, annotated-stop, and missing-name cases each have a test in the task that owns the behavior.
+- **Review Focus:** the long-note, Harkness, print-chrome, annotated-stop, missing-name, and one-page-sheet cases each have a test in the task that owns the behavior.
 - **No hidden implementation:** Task 2 pins props, selectors, copy, page structure, and CSS behavior; the builder chooses only typography/spacing details within those constraints.

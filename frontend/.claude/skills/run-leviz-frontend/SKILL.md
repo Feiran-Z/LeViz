@@ -26,7 +26,7 @@ machine. Evidence from that run:
   passed**, zero console errors, zero page errors, 4 non-blank screenshots.
 - `node .claude/skills/run-leviz-frontend/driver.mjs --flow teach` → **all 31 checks
   passed**, zero console errors, zero page errors, 5 non-blank screenshots.
-- `node .claude/skills/run-leviz-frontend/driver.mjs --flow print` → **all 12 checks
+- `node .claude/skills/run-leviz-frontend/driver.mjs --flow print` → **all 13 checks
   passed**, zero console errors, zero page errors, 3 non-blank screenshots.
 
 The `lesson` flow creates a lesson, sets class size to 12, applies the Harkness template
@@ -56,7 +56,8 @@ The `print` flow builds a station-rotation layout with groups and a station prom
 opens Print materials from the layout toolbar. It checks the print route, the seating
 sheet and assignment table, the station prompt/group/engagement, one card per station,
 the absence of editor chrome, the screen toolbar hidden under print media, that the
-Print button calls `window.print`, and the overview's Print materials entry.
+seating sheet fits one printed page, that the Print button calls `window.print`, and the
+overview's Print materials entry.
 
 ## Prerequisites
 
@@ -174,6 +175,9 @@ fired. **Open the screenshots** — a blank PNG is a failure even when exit code
   exactly once. The native dialog is never opened.
 - The print page reads the saved lesson; the editor's close save must land before the
   route loads. The flow waits at each navigation.
+- The print-media check switches to a `720×960` viewport (7.5in of content at 96dpi) and
+  asserts the `.print-sheet` height is at most `960px`. A PDF export of the fixture is
+  five letter pages: one seating sheet plus four station cards.
 
 ## Run — human path
 

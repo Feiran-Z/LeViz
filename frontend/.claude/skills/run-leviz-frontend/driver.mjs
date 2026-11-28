@@ -900,9 +900,19 @@ async function runPrintFlow(page, opts, shoot, checks) {
   );
   await shoot('01-print-preview');
 
+  await page.setViewportSize({ width: 720, height: 960 });
   await page.emulateMedia({ media: 'print' });
   check('screen toolbar is hidden in print', !(await page.locator('.print-toolbar').isVisible()));
+  const sheetHeight = await page
+    .locator('.print-sheet')
+    .evaluate((element) => element.getBoundingClientRect().height);
+  check(
+    'seating sheet fits one printed page',
+    sheetHeight > 0 && sheetHeight <= 960,
+    String(Math.round(sheetHeight)),
+  );
   await shoot('02-print-media');
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ media: 'screen' });
 
   await page.getByRole('button', { name: 'Print', exact: true }).click();
